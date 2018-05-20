@@ -116,9 +116,8 @@
 //static int sleep_tmp;
 #define ZOJ_COM
  MYSQL *conn;
-
- static char lang_ext[15][8] = { "c", "cc", "pas", "java", "rb", "sh", "py",
- "php", "pl", "cs", "m", "bas", "scm","c","cc" };
+                               // 0    1     2      3       4     5     6   7     8      9    10   11     12     13  14    15
+ static char lang_ext[16][8] = { "c", "cc", "pas", "java", "rb", "sh", "py","php", "pl", "cs", "m", "bas", "scm","c","cc","py" };
 //static char buf[BUFFER_SIZE];
  int data_list_has(char * file){
  	for(int i=0;i<data_list_len;i++){
@@ -229,6 +228,9 @@
 	} else if (lang == 12) { //scheme guile
 		for (i = 0; i==0||LANG_SV[i]; i++)
 			call_counter[LANG_SV[i]] = HOJ_MAX_LIMIT;
+	}else if(lang == 15){ //scheme python3
+		for (i = 0; i==0||LANG_PY3[i]; i++)
+			call_counter[LANG_PY3[i]] = HOJ_MAX_LIMIT;
 	}
 
 }
@@ -556,8 +558,7 @@ void find_next_nonspace(int & c1, int & c2, FILE *& f1, FILE *& f2, int & ret) {
  	return ret;
  }
  bool check_login() {
- 	const char * cmd =
- 	" wget --post-data=\"checklogin=1\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
+ 	const char * cmd =" wget --post-data=\"checklogin=1\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
  	int ret = 0;
  	FILE * fjobs = read_cmd_output(cmd, http_baseurl);
  	fscanf(fjobs, "%d", &ret);
@@ -567,8 +568,7 @@ void find_next_nonspace(int & c1, int & c2, FILE *& f1, FILE *& f2, int & ret) {
  }
  void login() {
  	if (!check_login()) {
- 		const char * cmd =
- 		"wget --post-data=\"user_id=%s&password=%s\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/login.php\"";
+ 		const char * cmd ="wget --post-data=\"user_id=%s&password=%s\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/login.php\"";
  		FILE * fjobs = read_cmd_output(cmd, http_username, http_password,
  			http_baseurl);
 		//fscanf(fjobs,"%d",&ret);
@@ -581,13 +581,9 @@ void find_next_nonspace(int & c1, int & c2, FILE *& f1, FILE *& f2, int & ret) {
  	int sim, int sim_s_id, double pass_rate) {
  	char sql[BUFFER_SIZE];
  	if (oi_mode) {
- 		sprintf(sql,
- 			"UPDATE solution SET result=%d,time=%d,memory=%d,pass_rate=%f WHERE solution_id=%d LIMIT 1%c",
- 			result, time, memory, pass_rate, solution_id, 0);
+ 		sprintf(sql,"UPDATE solution SET result=%d,time=%d,memory=%d,pass_rate=%f WHERE solution_id=%d LIMIT 1%c",result, time, memory, pass_rate, solution_id, 0);
  	} else {
- 		sprintf(sql,
- 			"UPDATE solution SET result=%d,time=%d,memory=%d WHERE solution_id=%d LIMIT 1%c",
- 			result, time, memory, solution_id, 0);
+ 		sprintf(sql,"UPDATE solution SET result=%d,time=%d,memory=%d WHERE solution_id=%d LIMIT 1%c",result, time, memory, solution_id, 0);
  	}
 	//      printf("sql= %s\n",sql);
  	if (mysql_real_query(conn, sql, strlen(sql))) {
@@ -595,8 +591,7 @@ void find_next_nonspace(int & c1, int & c2, FILE *& f1, FILE *& f2, int & ret) {
  	}
  	if (sim) {
  		sprintf(sql,
- 			"insert into sim(s_id,sim_s_id,sim) values(%d,%d,%d) on duplicate key update  sim_s_id=%d,sim=%d",
- 			solution_id, sim_s_id, sim, sim_s_id, sim);
+ 			"insert into sim(s_id,sim_s_id,sim) values(%d,%d,%d) on duplicate key update  sim_s_id=%d,sim=%d",solution_id, sim_s_id, sim, sim_s_id, sim);
 		//      printf("sql= %s\n",sql);
  		if (mysql_real_query(conn, sql, strlen(sql))) {
 			//              printf("..update failed! %s\n",mysql_error(conn));
@@ -708,8 +703,7 @@ void _addceinfo_http(int solution_id) {
 	fclose(ce);
 	free(ceinfo_encode);
 
-	const char * cmd =
-	" wget --post-file=\"ce.post\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
+	const char * cmd =" wget --post-file=\"ce.post\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
 	FILE * fjobs = read_cmd_output(cmd, http_baseurl);
 	//fscanf(fjobs,"%d",&ret);
 	pclose(fjobs);
@@ -785,8 +779,7 @@ void _addreinfo_http(int solution_id, const char * filename) {
 	fclose(re);
 	free(reinfo_encode);
 
-	const char * cmd =
-	" wget --post-file=\"re.post\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
+	const char * cmd =" wget --post-file=\"re.post\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
 	FILE * fjobs = read_cmd_output(cmd, http_baseurl);
 	//fscanf(fjobs,"%d",&ret);
 	pclose(fjobs);
@@ -819,21 +812,18 @@ void addcustomout(int solution_id) {
 
 void _update_user_mysql(char * user_id) {
 	char sql[BUFFER_SIZE];
-	sprintf(sql,
-		"UPDATE `users` SET `solved`=(SELECT count(DISTINCT `problem_id`) FROM `solution` WHERE `user_id`=\'%s\' AND `result`=\'4\') WHERE `user_id`=\'%s\'",
+	sprintf(sql,"UPDATE `users` SET `solved`=(SELECT count(DISTINCT `problem_id`) FROM `solution` WHERE `user_id`=\'%s\' AND `result`=\'4\') WHERE `user_id`=\'%s\'",
 		user_id, user_id);
 	if (mysql_real_query(conn, sql, strlen(sql)))
 		write_log(mysql_error(conn));
-	sprintf(sql,
-		"UPDATE `users` SET `submit`=(SELECT count(*) FROM `solution` WHERE `user_id`=\'%s\') WHERE `user_id`=\'%s\'",
+	sprintf(sql,"UPDATE `users` SET `submit`=(SELECT count(*) FROM `solution` WHERE `user_id`=\'%s\') WHERE `user_id`=\'%s\'",
 		user_id, user_id);
 	if (mysql_real_query(conn, sql, strlen(sql)))
 		write_log(mysql_error(conn));
 }
 void _update_user_http(char * user_id) {
 
-	const char * cmd =
-	" wget --post-data=\"updateuser=1&user_id=%s\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
+	const char * cmd =" wget --post-data=\"updateuser=1&user_id=%s\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
 	FILE * fjobs = read_cmd_output(cmd, user_id, http_baseurl);
 	//fscanf(fjobs,"%d",&ret);
 	pclose(fjobs);
@@ -847,21 +837,18 @@ void update_user(char * user_id) {
 }
 
 void _update_problem_http(int pid) {
-	const char * cmd =
-	" wget --post-data=\"updateproblem=1&pid=%d\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
+	const char * cmd =" wget --post-data=\"updateproblem=1&pid=%d\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
 	FILE * fjobs = read_cmd_output(cmd, pid, http_baseurl);
 	//fscanf(fjobs,"%d",&ret);
 	pclose(fjobs);
 }
 void _update_problem_mysql(int p_id) {
 	char sql[BUFFER_SIZE];
-	sprintf(sql,
-		"UPDATE `problem` SET `accepted`=(SELECT count(*) FROM `solution` WHERE `problem_id`=\'%d\' AND `result`=\'4\') WHERE `problem_id`=\'%d\'",
+	sprintf(sql,"UPDATE `problem` SET `accepted`=(SELECT count(*) FROM `solution` WHERE `problem_id`=\'%d\' AND `result`=\'4\') WHERE `problem_id`=\'%d\'",
 		p_id, p_id);
 	if (mysql_real_query(conn, sql, strlen(sql)))
 		write_log(mysql_error(conn));
-	sprintf(sql,
-		"UPDATE `problem` SET `submit`=(SELECT count(*) FROM `solution` WHERE `problem_id`=\'%d\') WHERE `problem_id`=\'%d\'",
+	sprintf(sql,"UPDATE `problem` SET `submit`=(SELECT count(*) FROM `solution` WHERE `problem_id`=\'%d\') WHERE `problem_id`=\'%d\'",
 		p_id, p_id);
 	if (mysql_real_query(conn, sql, strlen(sql)))
 		write_log(mysql_error(conn));
@@ -876,29 +863,21 @@ void update_problem(int pid) {
 int compile(int lang) {
 	int pid;
 
-	const char * CP_C[] = { "gcc", "Main.c", "-o", "Main", "-fno-asm", "-Wall",
-	"-lm", "--static", "-std=c99", "-DONLINE_JUDGE", NULL };
-	const char * CP_X[] = { "g++", "Main.cc", "-o", "Main", "-fno-asm", "-Wall",
-	"-lm", "--static", "-std=c++11", "-DONLINE_JUDGE", NULL };
+	const char * CP_C[] = { "gcc", "Main.c", "-o", "Main", "-fno-asm", "-Wall","-lm", "--static", "-std=c99", "-DONLINE_JUDGE", NULL };
+	const char * CP_X[] = { "g++", "Main.cc", "-o", "Main", "-fno-asm", "-Wall","-lm", "--static", "-std=c++11", "-DONLINE_JUDGE", NULL };
 //	{ "fpc", "Main.pas", "-O2", "-Co", "-Ct", "-Ci", NULL };
 //      const char * CP_J[] = { "javac", "-J-Xms32m", "-J-Xmx256m","-encoding","UTF-8", "Main.java",NULL };
-
 	const char * CP_R[] = { "ruby", "-c", "Main.rb", NULL };
 	const char * CP_B[] = { "chmod", "+rx", "Main.sh", NULL };
-	const char * CP_Y[] = { "python", "-c",
-	"import py_compile; py_compile.compile(r'Main.py')", NULL };
+	const char * CP_Y[] = { "python", "-c","import py_compile; py_compile.compile(r'Main.py')", NULL };
 	const char * CP_PH[] = { "php", "-l", "Main.php", NULL };
 	const char * CP_PL[] = { "perl", "-c", "Main.pl", NULL };
 	const char * CP_CS[] = { "gmcs", "-warn:0", "Main.cs", NULL };
-	const char * CP_OC[] = { "gcc", "-o", "Main", "Main.m",
-	"-fconstant-string-class=NSConstantString", "-I",
-	"/usr/include/GNUstep/", "-L", "/usr/lib/GNUstep/Libraries/",
-	"-lobjc", "-lgnustep-base", NULL };
+	const char * CP_OC[] = { "gcc", "-o", "Main", "Main.m",	"-fconstant-string-class=NSConstantString", "-I","/usr/include/GNUstep/", "-L", "/usr/lib/GNUstep/Libraries/","-lobjc", "-lgnustep-base", NULL };
 	const char * CP_BS[] = { "fbc", "Main.bas", NULL };
-	const char * CP_CLANG[]={"clang", "Main.c", "-o", "Main", "-fno-asm", "-Wall",
-	"-lm", "--static", "-std=c99", "-DONLINE_JUDGE", NULL };
-	const char * CP_CLANG_CPP[]={"clang++", "Main.cc", "-o", "Main", "-fno-asm", "-Wall",
-	"-lm", "--static", "-std=c++0x",  "-DONLINE_JUDGE", NULL };
+	const char * CP_CLANG[]={"clang", "Main.c", "-o", "Main", "-fno-asm", "-Wall","-lm", "--static", "-std=c99", "-DONLINE_JUDGE", NULL };
+	const char * CP_CLANG_CPP[]={"clang++", "Main.cc", "-o", "Main", "-fno-asm", "-Wall", "-lm", "--static", "-std=c++0x",  "-DONLINE_JUDGE", NULL };
+   	const char * CP_PY3[] = { "python3", "-c","import py_compile; py_compile.compile(r'Main.py')", NULL };
 
 	char javac_buf[7][16];
 	char *CP_J[7];
@@ -987,6 +966,9 @@ int compile(int lang) {
 			break;
 			case 14:
 			execvp(CP_CLANG_CPP[0], (char * const *) CP_CLANG_CPP);
+			break;
+			case 15:
+			execvp(CP_PY3[0], (char * const *) CP_PY3);
 			break;
 			default:
 			printf("nothing to do!\n");
@@ -1086,8 +1068,7 @@ void _get_solution_http(int solution_id, char * work_dir, int lang) {
 
 	//login();
 
-	const char * cmd2 =
-	"wget --post-data=\"getsolution=1&sid=%d\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O %s \"%s/admin/problem_judge.php\"";
+	const char * cmd2 ="wget --post-data=\"getsolution=1&sid=%d\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O %s \"%s/admin/problem_judge.php\"";
 	FILE * pout = read_cmd_output(cmd2, solution_id, src_pth, http_baseurl);
 
 	pclose(pout);
@@ -1131,8 +1112,7 @@ void _get_custominput_http(int solution_id, char * work_dir) {
 
 	//login();
 
-	const char * cmd2 =
-	"wget --post-data=\"getcustominput=1&sid=%d\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O %s \"%s/admin/problem_judge.php\"";
+	const char * cmd2 =	"wget --post-data=\"getcustominput=1&sid=%d\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O %s \"%s/admin/problem_judge.php\"";
 	FILE * pout = read_cmd_output(cmd2, solution_id, src_pth, http_baseurl);
 
 	pclose(pout);
@@ -1248,7 +1228,6 @@ void prepare_files(char * filename, int namelen, char * infile, int & p_id,
 }
 
 void copy_shell_runtime(char * work_dir) {
-
 	execute_cmd("/bin/mkdir %s/lib", work_dir);
 	execute_cmd("/bin/mkdir %s/lib64", work_dir);
 	execute_cmd("/bin/mkdir %s/bin", work_dir);
@@ -1262,6 +1241,7 @@ void copy_shell_runtime(char * work_dir) {
 	execute_cmd("/bin/cp /bin/bash %s/bin/bash", work_dir);
 
 }
+
 void copy_objc_runtime(char * work_dir) {
 	copy_shell_runtime(work_dir);
 	execute_cmd("/bin/mkdir -p %s/proc", work_dir);
@@ -1473,6 +1453,22 @@ void copy_mono_runtime(char * work_dir) {
 	execute_cmd("/bin/chown judge %s/home/judge", work_dir);
 	execute_cmd("/bin/mkdir -p %s/etc", work_dir);
 	execute_cmd("/bin/grep judge /etc/passwd>%s/etc/passwd", work_dir);
+
+}
+
+void copy_python3_runtime(char * work_dir) {
+
+	copy_shell_runtime(work_dir);
+	execute_cmd("mkdir -p %s/usr/include", work_dir);
+	execute_cmd("mkdir -p %s/usr/lib", work_dir);
+	execute_cmd("mkdir -p %s/usr/lib64", work_dir);
+	execute_cmd("mkdir -p %s/usr/local/lib", work_dir);
+	execute_cmd("cp /usr/bin/python* %s/", work_dir);
+	execute_cmd("cp -a /usr/lib/python* %s/usr/lib/", work_dir);
+	execute_cmd("cp -a /usr/lib64/python* %s/usr/lib64/", work_dir);
+	execute_cmd("cp -a /usr/local/lib/python* %s/usr/local/lib/", work_dir);
+	execute_cmd("cp -a /usr/include/python* %s/usr/include/", work_dir);
+	execute_cmd("cp -a /usr/lib/libpython* %s/usr/lib/", work_dir);
 
 }
 
@@ -2196,6 +2192,8 @@ int main(int argc, char** argv) {
 		copy_freebasic_runtime(work_dir);
 	if (lang == 12)
 		copy_guile_runtime(work_dir);
+	if (lang == 15)
+		copy_python3_runtime(work_dir);
 	// read files and run
 	// read files and run
 	// read files and run
