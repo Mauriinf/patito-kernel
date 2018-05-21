@@ -116,9 +116,8 @@
 //static int sleep_tmp;
 #define ZOJ_COM
  MYSQL *conn;
-
- static char lang_ext[15][8] = { "c", "cc", "pas", "java", "rb", "sh", "py",
- "php", "pl", "cs", "m", "bas", "scm","c","cc" };
+                                //0    1     2       3      4    5     6     7       8     9     10   11     12    13  14   15   16
+ static char lang_ext[17][8] = { "c", "cc", "pas", "java", "rb", "sh", "py", "php", "pl", "cs", "m", "bas", "scm","c","cc","py","cc" };
 //static char buf[BUFFER_SIZE];
  int data_list_has(char * file){
  	for(int i=0;i<data_list_len;i++){
@@ -192,7 +191,7 @@
 		for (i = 0; i < call_array_size; i++) {
 			call_counter[i] = 0;
 		}
-	} else if (lang <= 1||lang==13||lang==14) { // C & C++
+	} else if (lang <= 1||lang==13||lang==14||lang == 16) { // C & C++
 		for (i = 0; i==0||LANG_CV[i]; i++) {
 			call_counter[LANG_CV[i]] = HOJ_MAX_LIMIT;
 		}
@@ -229,6 +228,9 @@
 	} else if (lang == 12) { //scheme guile
 		for (i = 0; i==0||LANG_SV[i]; i++)
 			call_counter[LANG_SV[i]] = HOJ_MAX_LIMIT;
+	} else if (lang == 15) { //python3
+		for (i = 0; i==0||LANG_PY3[i]; i++)
+			call_counter[LANG_PY3[i]] = HOJ_MAX_LIMIT;
 	}
 
 }
@@ -879,14 +881,13 @@ int compile(int lang) {
 	const char * CP_C[] = { "gcc", "Main.c", "-o", "Main", "-fno-asm", "-Wall",
 	"-lm", "--static", "-std=c99", "-DONLINE_JUDGE", NULL };
 	const char * CP_X[] = { "g++", "Main.cc", "-o", "Main", "-fno-asm", "-Wall",
-	"-lm", "--static", "-std=c++11", "-DONLINE_JUDGE", NULL };
+	"-lm", "--static", "-DONLINE_JUDGE", NULL };
 //	{ "fpc", "Main.pas", "-O2", "-Co", "-Ct", "-Ci", NULL };
 //      const char * CP_J[] = { "javac", "-J-Xms32m", "-J-Xmx256m","-encoding","UTF-8", "Main.java",NULL };
 
 	const char * CP_R[] = { "ruby", "-c", "Main.rb", NULL };
 	const char * CP_B[] = { "chmod", "+rx", "Main.sh", NULL };
-	const char * CP_Y[] = { "python", "-c",
-	"import py_compile; py_compile.compile(r'Main.py')", NULL };
+	//const char * CP_Y[] = { "python2.7", "-c",	"import py_compile; py_compile.compile(r'Main.py')", NULL };
 	const char * CP_PH[] = { "php", "-l", "Main.php", NULL };
 	const char * CP_PL[] = { "perl", "-c", "Main.pl", NULL };
 	const char * CP_CS[] = { "gmcs", "-warn:0", "Main.cs", NULL };
@@ -899,6 +900,9 @@ int compile(int lang) {
 	"-lm", "--static", "-std=c99", "-DONLINE_JUDGE", NULL };
 	const char * CP_CLANG_CPP[]={"clang++", "Main.cc", "-o", "Main", "-fno-asm", "-Wall",
 	"-lm", "--static", "-std=c++0x",  "-DONLINE_JUDGE", NULL };
+//	const char * CP_PY3[] = { "python3", "-c",	"import py_compile; py_compile.compile(r'Main.py')", NULL };
+
+	const char * CP_X11[] = { "g++", "Main.cc", "-o", "Main", "-fno-asm", "-Wall","-lm", "--static", "-std=c++11", "-DONLINE_JUDGE", NULL };
 
 	char javac_buf[7][16];
 	char *CP_J[7];
@@ -963,9 +967,9 @@ int compile(int lang) {
 			case 5:
 			execvp(CP_B[0], (char * const *) CP_B);
 			break;
-			case 6:
-			execvp(CP_Y[0], (char * const *) CP_Y);
-			break;
+			//case 6:
+			//execvp(CP_Y[0], (char * const *) CP_Y);
+			//break;
 			case 7:
 			execvp(CP_PH[0], (char * const *) CP_PH);
 			break;
@@ -987,6 +991,12 @@ int compile(int lang) {
 			break;
 			case 14:
 			execvp(CP_CLANG_CPP[0], (char * const *) CP_CLANG_CPP);
+			break;
+			//case 15:
+			//execvp(CP_PY3[0], (char * const *) CP_PY3);
+			//break;
+			case 16:
+			execvp(CP_X11[0], (char * const *) CP_X11);
 			break;
 			default:
 			printf("nothing to do!\n");
@@ -1476,8 +1486,29 @@ void copy_mono_runtime(char * work_dir) {
 
 }
 
-void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,
-	int & mem_lmt) {
+void copy_python3_runtime(char * work_dir) {
+
+	copy_shell_runtime(work_dir);
+	execute_cmd("mkdir -p %s/usr/include", work_dir);
+	execute_cmd("mkdir -p %s/dev", work_dir);
+	execute_cmd("mkdir -p %s/usr/lib", work_dir);
+	execute_cmd("mkdir -p %s/usr/lib64", work_dir);
+	execute_cmd("mkdir -p %s/usr/local/lib", work_dir);
+	execute_cmd("cp /usr/bin/python* %s/", work_dir);
+	execute_cmd("cp -a /usr/lib/python* %s/usr/lib/", work_dir);
+	execute_cmd("cp -a /usr/lib64/python* %s/usr/lib64/", work_dir);
+	execute_cmd("cp -a /usr/local/lib/python* %s/usr/local/lib/", work_dir);
+	execute_cmd("cp -a /usr/include/python* %s/usr/include/", work_dir);
+	execute_cmd("cp -a /usr/lib/libpython* %s/usr/lib/", work_dir);
+	execute_cmd("/bin/mkdir -p %s/home/judge", work_dir);
+	execute_cmd("/bin/chown judge %s", work_dir);
+	execute_cmd("/bin/mkdir -p %s/etc", work_dir);
+	execute_cmd("/bin/grep judge /etc/passwd>%s/etc/passwd", work_dir);
+	execute_cmd("/bin/mount -o bind /dev %s/dev", work_dir);
+
+}
+
+void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,int & mem_lmt) {
 	nice(19);
 	// now the user is "judger"
 	chdir(work_dir);
@@ -1542,7 +1573,7 @@ setrlimit(RLIMIT_STACK, &LIM);
 	// set the memory
 LIM.rlim_cur = STD_MB * mem_lmt / 2 * 3;
 LIM.rlim_max = STD_MB * mem_lmt * 2;
-if (lang < 3)
+if (lang < 3 || lang == 16) //c,++ y c++11
 	setrlimit(RLIMIT_AS, &LIM);
 
 switch (lang) {
@@ -1553,6 +1584,7 @@ switch (lang) {
 	case 11:
 	case 13:
 	case 14:
+	case 16:
 	execl("./Main", "./Main", (char *) NULL);
 	break;
 	case 3:
@@ -1571,7 +1603,7 @@ switch (lang) {
 	execl("/bin/bash", "/bin/bash", "Main.sh", (char *) NULL);
 	break;
 	case 6: //Python
-	execl("/python", "/python", "Main.py", (char *) NULL);
+	execl("/python2.7", "/python2.7", "Main.py", (char *) NULL);
 	break;
 	case 7: //php
 	execl("/php", "/php", "Main.php", (char *) NULL);
@@ -1585,11 +1617,29 @@ switch (lang) {
 	case 12: //guile
 	execl("/guile", "/guile", "Main.scm", (char *) NULL);
 	break;
-
+	case 15: //PYTHON3
+	execl("/python3", "/python3", "Main.py", (char *) NULL);
+	break;
 }
 	//sleep(1);
 exit(0);
 }
+
+int fix_python_mis_judge(char *work_dir, int & ACflg, int & topmemory,
+                int mem_lmt) {
+        int comp_res = OJ_AC;
+
+        comp_res = execute_cmd("/bin/grep 'MemoryError'  %s/error.out", work_dir);
+
+        if (!comp_res) {
+                printf("Python need more Memory!");
+                ACflg = OJ_ML;
+                topmemory = mem_lmt * STD_MB;
+        }
+
+        return comp_res;
+}
+
 int fix_java_mis_judge(char *work_dir, int & ACflg, int & topmemory,
 	int mem_lmt) {
 	int comp_res = OJ_AC;
@@ -1713,6 +1763,10 @@ void judge_solution(int & ACflg, int & usedtime, int time_lmt, int isspj,
 	//jvm popup messages, if don't consider them will get miss-WrongAnswer
 	if (lang == 3) {
 		comp_res = fix_java_mis_judge(work_dir, ACflg, topmemory, mem_lmt);
+	}
+
+	if(lang == 6 || lang == 15){
+	    comp_res = fix_python_mis_judge(work_dir, ACflg, topmemory, mem_lmt);
 	}
 }
 
@@ -2096,6 +2150,7 @@ int main(int argc, char** argv) {
 	if (http_judge)
 		system("/bin/ln -s ../cookie ./");
 	get_solution_info(solution_id, p_id, user_id, lang);
+	printf("lenguage  %d\n",lang);
 	//get the limit
 
 	if (p_id == 0) {
@@ -2196,6 +2251,8 @@ int main(int argc, char** argv) {
 		copy_freebasic_runtime(work_dir);
 	if (lang == 12)
 		copy_guile_runtime(work_dir);
+	if (lang == 15)
+		copy_python3_runtime(work_dir);
 	// read files and run
 	// read files and run
 	// read files and run
