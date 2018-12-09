@@ -1705,8 +1705,7 @@ int special_judge(char* oj_home, int problem_id, char *infile, char *outfile,
 		LIM.rlim_cur = STD_F_LIM;
 		setrlimit(RLIMIT_FSIZE, &LIM);
 
-		ret = execute_cmd("%s/data/%d/spj %s %s %s", oj_home, problem_id,
-			infile, outfile, userfile);
+		ret = execute_cmd("%s/data/%d/spj %s %s %s", oj_home, problem_id,infile, outfile, userfile);
 		if (DEBUG)
 			printf("spj1=%d\n", ret);
 		if (ret)
