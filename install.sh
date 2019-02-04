@@ -1,15 +1,15 @@
 #!/bin/bash
-cd /home/judge/src/core/judge
+cd $PWD/judge
 make
 chmod +x judged
 cp -f  judged /usr/bin
-
-cd /home/judge/src/core/judge_client
+cd ../judge_client
 make
 chmod +x judge_client
 cp -f judge_client /usr/bin
 
-cd /home/judge/src/core/sim/sim_2_67
+cd ..
+cd sim/sim_2_67
 make fresh
 make exes
 chmod +x sim*
@@ -25,9 +25,9 @@ rm /usr/bin/sim_cc /usr/bin/sim_rb /usr/bin/sim_sh
 ln -sf /usr/bin/sim_c /usr/bin/sim_cc
 ln -sf /usr/bin/sim_text /usr/bin/sim_rb
 ln -sf /usr/bin/sim_text /usr/bin/sim_sh
-
+cd ..
 #########
-cd /home/judge/src/core
+
 cp judged /etc/init.d/judged
 chmod +x  /etc/init.d/judged
 ln -sf /etc/init.d/judged /etc/rc3.d/S93judged
