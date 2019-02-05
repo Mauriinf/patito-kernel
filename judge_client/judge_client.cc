@@ -1256,6 +1256,8 @@ void copy_mono_runtime(char * work_dir) {
 void copy_python3_runtime(char * work_dir) {
 
 	copy_shell_runtime(work_dir);
+	execute_cmd("mknod -m 444 /dev/urandom c 1 9");
+	execute_cmd("mknod -m 444 /dev/urandom c 1 8");
 	execute_cmd("mkdir -p %s/usr/include", work_dir);
 	execute_cmd("mkdir -p %s/dev", work_dir);
 	execute_cmd("mkdir -p %s/usr/lib", work_dir);
