@@ -111,7 +111,6 @@
  static int sim_enable = 0;
  static int oi_mode = 0;
  static int use_max_time = 0;
-
  static int http_judge = 0;
 
  static int shm_run = 0;
@@ -121,7 +120,7 @@
 //static int sleep_tmp;
 #define ZOJ_COM
  MYSQL *conn;
-                                //0    1     2       3      4    5     6     7       8     9     10   11     12    13  14   15   16c++11 py3.7
+                                //0    1     2       3      4    5     6     7       8     9     10   11     12    13  14   15   16c++11 17 py3.7
  static char lang_ext[18][8] = { "c", "cc", "pas", "java", "rb", "sh", "py", "php", "pl", "cs", "m", "bas", "scm","c","cc","py","cc",     "py" };
 //static char buf[BUFFER_SIZE];
  int data_list_has(char * file){
@@ -152,38 +151,44 @@
  	return (long) f_stat.st_size;
  }
 
- void write_log(const char *fmt, ...) {
- 	va_list ap;
- 	char buffer[4096];
+void write_log(const char *_fmt, ...){
+	va_list ap;
+	char fmt[4096];
+	strncpy(fmt, _fmt, 4096);
+	char buffer[4096];
+	//      time_t          t = time(NULL);
+	//int l;
+	sprintf(buffer, "%s/log/client.log", oj_home);
+	FILE *fp = fopen(buffer, "ae+");
+	if (fp == NULL)
+	{
+		fprintf(stderr, "openfile error!\n");
+		system("pwd");
+	}
+	va_start(ap, _fmt);
+	//l =
+	vsprintf(buffer, fmt, ap);
+	fprintf(fp, "%s\n", buffer);
+	if (DEBUG)
+		printf("%s\n", buffer);
+	va_end(ap);
+	fclose(fp);
+}
 
- 	FILE *fp = fopen(JUDGELOG, "a+");
- 	if (fp == NULL) {
- 		fprintf(stderr, "openfile error!\n");
- 		system("pwd");
- 	}
- 	va_start(ap, fmt);
-	//l = 
- 	vsprintf(buffer, fmt, ap);
- 	fprintf(fp, "%s\n", buffer);
- 	if (DEBUG)
- 		printf("%s\n", buffer);
- 	va_end(ap);
- 	fclose(fp);
+int execute_cmd(const char *fmt, ...){
+	char cmd[BUFFER_SIZE];
 
- }
+	int ret = 0;
+	va_list ap;
 
- int execute_cmd(const char * fmt, ...) {
- 	char cmd[BUFFER_SIZE];
-
- 	int ret = 0;
- 	va_list ap;
-
- 	va_start(ap, fmt);
- 	vsprintf(cmd, fmt, ap);
- 	ret = system(cmd);
- 	va_end(ap);
- 	return ret;
- }
+	va_start(ap, fmt);
+	vsprintf(cmd, fmt, ap);
+	if (DEBUG)
+		printf("%s\n", cmd);
+	ret = system(cmd);
+	va_end(ap);
+	return ret;
+}
 
  const int call_array_size = 512;
  int call_counter[call_array_size] = { 0 };
@@ -271,6 +276,12 @@ bool read_buf(char * buf, const char * key, char * value) {
 		return 1;
 	}
 	return 0;
+}
+
+void read_double(char *buf, const char *key, double *value){
+	char buf2[BUFFER_SIZE];
+	if (read_buf(buf, key, buf2))
+		sscanf(buf2, "%lf", value);
 }
 
 void read_int(char * buf, const char * key, int * value) {
@@ -723,7 +734,22 @@ void update_problem(int pid) {
    _update_problem_mysql(pid);
 }
 
-int compile(int lang) {
+void umount(char *work_dir){
+	execute_cmd("/bin/umount -f %s/proc 2>/dev/null", work_dir);
+	execute_cmd("/bin/umount -f %s/dev 2>/dev/null", work_dir);
+	execute_cmd("/bin/umount -f %s/lib 2>/dev/null", work_dir);
+	execute_cmd("/bin/umount -f %s/lib64 2>/dev/null", work_dir);
+	execute_cmd("/bin/umount -f %s/etc/alternatives 2>/dev/null", work_dir);
+	execute_cmd("/bin/umount -f %s/usr 2>/dev/null", work_dir);
+	execute_cmd("/bin/umount -f %s/bin 2>/dev/null", work_dir);
+	execute_cmd("/bin/umount -f %s/proc 2>/dev/null", work_dir);
+	execute_cmd("/bin/umount -f bin usr lib lib64 etc/alternatives proc dev 2>/dev/null");
+	execute_cmd("/bin/umount -f %s/* 2>/dev/null", work_dir);
+	execute_cmd("/bin/umount -f %s/log/* 2>/dev/null", work_dir);
+	execute_cmd("/bin/umount -f %s/log/etc/alternatives 2>/dev/null", work_dir);
+}
+
+int compile(int lang, char *work_dir) {
 	int pid;
 
 	const char * CP_C[] = { "gcc", "Main.c", "-o", "Main", "-fno-asm", "-Wall",	"-lm", "--static", "-std=c99", "-DONLINE_JUDGE", NULL };
@@ -772,7 +798,7 @@ int compile(int lang) {
 
 		if(lang==3){
 			LIM.rlim_max = STD_MB << 11;
-			LIM.rlim_cur = STD_MB << 11;	
+			LIM.rlim_cur = STD_MB << 11;
 		}else{
 			LIM.rlim_max = STD_MB << 10;
 			LIM.rlim_cur = STD_MB << 10;
@@ -854,6 +880,9 @@ int compile(int lang) {
 			status = get_file_size("ce.txt");
 		if (DEBUG)
 			printf("status=%d\n", status);
+		execute_cmd("/bin/umount -f bin usr lib lib64 etc/alternatives proc dev 2>/dev/null");
+		execute_cmd("/bin/umount -f %s/* 2>/dev/null", work_dir);
+		umount(work_dir);
 		return status;
 	}
 
@@ -1168,21 +1197,41 @@ void copy_guile_runtime(char * work_dir) {
 
 }
 
-void copy_python_runtime(char * work_dir) {
+void copy_python_runtime(char *work_dir){
 
 	copy_shell_runtime(work_dir);
 	execute_cmd("mkdir -p %s/usr/include", work_dir);
+	execute_cmd("mkdir -p %s/dev", work_dir);
 	execute_cmd("mkdir -p %s/usr/lib", work_dir);
 	execute_cmd("mkdir -p %s/usr/lib64", work_dir);
 	execute_cmd("mkdir -p %s/usr/local/lib", work_dir);
+
+	// /etc/abrt/plugins/python.conf for Centos7
+	execute_cmd("mkdir -p %s/etc/abrt", work_dir);
+	execute_cmd("mkdir -p %s/etc/abrt/plugins", work_dir);
+	execute_cmd("cp -a /etc/abrt/plugins/python.conf %s/etc/abrt/plugins/python.conf", work_dir);
+	
+	// /usr/share/abrt/conf.d/plugins/python.conf for Centos7
+	execute_cmd("mkdir -p %s/usr/share", work_dir);
+	execute_cmd("mkdir -p %s/usr/share/abrt/", work_dir);
+	execute_cmd("mkdir -p %s/usr/share/abrt/conf.d", work_dir);
+	execute_cmd("mkdir -p %s/usr/share/abrt/conf.d/plugins", work_dir);
+	execute_cmd("cp -a /usr/share/abrt/conf.d/plugins/python.conf %s/usr/share/abrt/conf.d/plugins/python.conf", work_dir);
+	
 	execute_cmd("cp /usr/bin/python* %s/", work_dir);
 	execute_cmd("cp -a /usr/lib/python* %s/usr/lib/", work_dir);
 	execute_cmd("cp -a /usr/lib64/python* %s/usr/lib64/", work_dir);
 	execute_cmd("cp -a /usr/local/lib/python* %s/usr/local/lib/", work_dir);
 	execute_cmd("cp -a /usr/include/python* %s/usr/include/", work_dir);
 	execute_cmd("cp -a /usr/lib/libpython* %s/usr/lib/", work_dir);
-
+	execute_cmd("/bin/mkdir -p %s/home/judge", work_dir);
+	execute_cmd("/bin/chown judge %s", work_dir);
+	execute_cmd("/bin/mkdir -p %s/etc", work_dir);
+	execute_cmd("/bin/grep judge /etc/passwd>%s/etc/passwd", work_dir);
+	execute_cmd("/bin/mount -o bind /dev %s/dev", work_dir);
+	execute_cmd("/bin/mount -o remount,ro %s/dev", work_dir);
 }
+
 void copy_php_runtime(char * work_dir) {
 
 	copy_shell_runtime(work_dir);
@@ -1255,14 +1304,27 @@ void copy_mono_runtime(char * work_dir) {
 
 void copy_python3_runtime(char * work_dir) {
 
-	copy_shell_runtime(work_dir);
-	execute_cmd("mknod -m 444 /dev/urandom c 1 9");
-	execute_cmd("mknod -m 444 /dev/urandom c 1 8");
-	execute_cmd("mkdir -p %s/usr/include", work_dir);
+	//execute_cmd("mknod -m 444 /dev/urandom c 1 9");
+	//execute_cmd("mknod -m 444 /dev/urandom c 1 8");
+    copy_shell_runtime(work_dir);
+ 	execute_cmd("mkdir -p %s/usr/include", work_dir);
 	execute_cmd("mkdir -p %s/dev", work_dir);
 	execute_cmd("mkdir -p %s/usr/lib", work_dir);
 	execute_cmd("mkdir -p %s/usr/lib64", work_dir);
 	execute_cmd("mkdir -p %s/usr/local/lib", work_dir);
+/*
+	// /etc/abrt/plugins/python.conf for Centos7
+	execute_cmd("mkdir -p %s/etc/abrt", work_dir);
+	execute_cmd("mkdir -p %s/etc/abrt/plugins", work_dir);
+	execute_cmd("cp -a /etc/abrt/plugins/python.conf %s/etc/abrt/plugins/python.conf", work_dir);
+	
+	// /usr/share/abrt/conf.d/plugins/python.conf for Centos7
+	execute_cmd("mkdir -p %s/usr/share", work_dir);
+	execute_cmd("mkdir -p %s/usr/share/abrt/", work_dir);
+	execute_cmd("mkdir -p %s/usr/share/abrt/conf.d", work_dir);
+	execute_cmd("mkdir -p %s/usr/share/abrt/conf.d/plugins", work_dir);
+	execute_cmd("cp -a /usr/share/abrt/conf.d/plugins/python.conf %s/usr/share/abrt/conf.d/plugins/python.conf", work_dir);
+*/	
 	execute_cmd("cp /usr/bin/python* %s/", work_dir);
 	execute_cmd("cp -a /usr/lib/python* %s/usr/lib/", work_dir);
 	execute_cmd("cp -a /usr/lib64/python* %s/usr/lib64/", work_dir);
@@ -1274,6 +1336,7 @@ void copy_python3_runtime(char * work_dir) {
 	execute_cmd("/bin/mkdir -p %s/etc", work_dir);
 	execute_cmd("/bin/grep judge /etc/passwd>%s/etc/passwd", work_dir);
 	execute_cmd("/bin/mount -o bind /dev %s/dev", work_dir);
+    execute_cmd("/bin/mount -o remount,ro %s/dev", work_dir);
 
 }
 
@@ -1601,8 +1664,7 @@ void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
 			ptrace(PTRACE_KILL, pidApp, NULL, NULL);
 			break;
 		}
-		//sig = status >> 8;/*status >> 8 Ã¥Â·Â®Ã¤Â¸ÂÃ¥Â¤Å¡Ã¦ËÂ¯EXITCODE*/
-
+		//sig = status >> 8;/*status >> 8 */
 		if (WIFEXITED(status))
 			break;
 		if ((lang < 4 || lang == 9) && get_file_size("error.out") && !oi_mode) {
@@ -1721,17 +1783,18 @@ void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
 
 	//clean_session(pidApp);
 }
-void clean_workdir(char * work_dir) {
-	execute_cmd("/bin/umount %s/proc", work_dir);
-	if (DEBUG) {
-		execute_cmd("/bin/mv %s/* %slog/", work_dir, work_dir);
-	} else {
-		execute_cmd("/bin/rm -Rf %s/*", work_dir);
-
+void clean_workdir(char *work_dir){
+	umount(work_dir);
+	if (DEBUG){
+		execute_cmd("/bin/rm -rf %s/log/* 2>/dev/null", work_dir);
+		execute_cmd("mkdir %s/log/ 2>/dev/null", work_dir);
+		execute_cmd("/bin/mv %s/* %s/log/ 2>/dev/null", work_dir, work_dir);
+	} else{
+		execute_cmd("mkdir %s/log/ 2>/dev/null", work_dir);
+		execute_cmd("/bin/mv %s/* %s/log/ 2>/dev/null", work_dir, work_dir);
+		execute_cmd("/bin/rm -rf %s/log/* 2>/dev/null", work_dir);
 	}
-
 }
-
 void init_parameters(int argc, char ** argv, int & solution_id,
 	int & runner_id) {
 	if (argc < 3) {
@@ -1889,8 +1952,7 @@ int main(int argc, char** argv) {
         time_lmt = time_lmt + java_time_bonus;
         mem_lmt = mem_lmt + java_memory_bonus;
         // copy java.policy
-        execute_cmd("/bin/cp %s/etc/java0.policy %s/java.policy", oj_home,
-            work_dir);
+        execute_cmd("/bin/cp %s/etc/java0.policy %s/java.policy", oj_home, work_dir);
     }
 
     //never bigger than judged set value;
@@ -1907,7 +1969,7 @@ int main(int argc, char** argv) {
     // set the result to compiling
     int Compile_OK;
 
-    Compile_OK = compile(lang);
+    Compile_OK = compile(lang,work_dir);
     if (Compile_OK != 0) {
         addceinfo(solution_id);
         update_solution(solution_id, OJ_CE, 0, 0, 0, 0, 0.0);
@@ -1923,6 +1985,7 @@ int main(int argc, char** argv) {
     }
     else {
         update_solution(solution_id, OJ_RI, 0, 0, 0, 0, 0.0);
+        umount(work_dir);
     }
     //exit(0);
     // run
@@ -2054,7 +2117,7 @@ int main(int argc, char** argv) {
     }
     if (ACflg == OJ_AC && PEflg == OJ_PE)
         ACflg = OJ_PE;
-    if (sim_enable && ACflg == OJ_AC && (!oi_mode || finalACflg == OJ_AC) && lang < 5) { //bash don't supported
+    if (sim_enable && ACflg == OJ_AC && (!oi_mode || finalACflg == OJ_AC) && ((lang <= 6) || (lang >=13 && lang <=17))) { //bash don't supported
         sim = get_sim(solution_id, lang, p_id, sim_s_id);
     }
     else {
@@ -2103,3 +2166,4 @@ int main(int argc, char** argv) {
     closedir(dp);
     return 0;
 }
+
