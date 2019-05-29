@@ -9,7 +9,7 @@ chmod +x judge_client
 cp -f judge_client /usr/bin
 
 cd ..
-cd sim/sim_2_67
+cd sim/sim_3_01/
 make fresh
 make exes
 chmod +x sim*
