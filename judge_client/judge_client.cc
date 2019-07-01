@@ -112,11 +112,9 @@
  static int oi_mode = 0;
  static int use_max_time = 0;
  static int http_judge = 0;
-
  static int shm_run = 0;
-
  static char record_call = 0;
-
+ static double cpu_compensation = 1.0;
 //static int sleep_tmp;
 #define ZOJ_COM
  MYSQL *conn;
@@ -1351,7 +1349,7 @@ void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,in
 	// trace me
 	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 	// run me
-	if (lang != 3)
+	if (lang != 3 && lang != 6 && lang != 15 && lang != 17)
 		chroot(work_dir);
 
 	while (setgid(1536) != 0)
@@ -1367,14 +1365,14 @@ void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,in
 	struct rlimit LIM; // time limit, file limit& memory limit
 	// time limit
 	if (oi_mode)
-		LIM.rlim_cur = time_lmt + 1;
+		LIM.rlim_cur = time_lmt / cpu_compensation + 1;
 	else
-		LIM.rlim_cur = (time_lmt - usedtime / 1000) + 1;
+		LIM.rlim_cur = (time_lmt / cpu_compensation - usedtime / 1000) + 1;
 	LIM.rlim_max = LIM.rlim_cur;
 	//if(DEBUG) printf("LIM_CPU=%d",(int)(LIM.rlim_cur));
 	setrlimit(RLIMIT_CPU, &LIM);
 	alarm(0);
-	alarm(time_lmt * 10);
+	alarm(time_lmt * 5 / cpu_compensation);
 
 	// file limit
 	LIM.rlim_max = STD_F_LIM + STD_MB;
@@ -1435,7 +1433,7 @@ switch (lang) {
 	execl("/bin/bash", "/bin/bash", "Main.sh", (char *) NULL);
 	break;
 	case 6: //Python
-	execl("/python2.7", "/python2.7", "Main.py", (char *) NULL);
+	execl("/opt/anaconda3/bin/python2.7", "/opt/anaconda3/bin/python2.7", "Main.py", (char *) NULL);
 	break;
 	case 7: //php
 	execl("/php", "/php", "Main.php", (char *) NULL);
@@ -1450,10 +1448,10 @@ switch (lang) {
 	execl("/guile", "/guile", "Main.scm", (char *) NULL);
 	break;
 	case 15: //PYTHON3
-	execl("/python3", "/python3", "Main.py", (char *) NULL);
+	execl("/opt/anaconda3/bin/python3", "/opt/anaconda3/bin/python3", "Main.py", (char *) NULL);
 	break;
 	case 17: //PYTHON3.7
-	execl("/python3.7", "/python3.7", "Main.py", (char *) NULL);
+	execl("/opt/anaconda3/bin/python3.7", "/opt/anaconda3/bin/python3.7", "Main.py", (char *) NULL);
 	break;
 
 }
@@ -1600,7 +1598,7 @@ void judge_solution(int & ACflg, int & usedtime, int time_lmt, int isspj,
 		comp_res = fix_java_mis_judge(work_dir, ACflg, topmemory, mem_lmt);
 	}
 
-	if(lang == 6 || lang == 15){
+	if(lang == 6 || lang == 15 || lang == 17){
 	    comp_res = fix_python_mis_judge(work_dir, ACflg, topmemory, mem_lmt);
 	}
 }
@@ -1778,8 +1776,8 @@ void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
 
 		ptrace(PTRACE_SYSCALL, pidApp, NULL, NULL);
 	}
-	usedtime += (ruse.ru_utime.tv_sec * 1000 + ruse.ru_utime.tv_usec / 1000);
-	usedtime += (ruse.ru_stime.tv_sec * 1000 + ruse.ru_stime.tv_usec / 1000);
+	usedtime += (ruse.ru_utime.tv_sec * 1000 + ruse.ru_utime.tv_usec / 1000) * cpu_compensation;
+	usedtime += (ruse.ru_stime.tv_sec * 1000 + ruse.ru_stime.tv_usec / 1000) * cpu_compensation;
 
 	//clean_session(pidApp);
 }
@@ -2030,8 +2028,8 @@ int main(int argc, char** argv) {
         copy_freebasic_runtime(work_dir);
     if (lang == 12)
         copy_guile_runtime(work_dir);
-    if (lang == 15 || lang == 17)
-        copy_python3_runtime(work_dir);
+//    if (lang == 15 || lang == 17)
+//        copy_python3_runtime(work_dir);
     // read files and run
     // read files and run
     // read files and run
@@ -2117,7 +2115,7 @@ int main(int argc, char** argv) {
     }
     if (ACflg == OJ_AC && PEflg == OJ_PE)
         ACflg = OJ_PE;
-    if (sim_enable && ACflg == OJ_AC && (!oi_mode || finalACflg == OJ_AC) && ((lang <= 6) || (lang >=13 && lang <=17))) { //bash don't supported
+    if (sim_enable && ACflg == OJ_AC && (!oi_mode || finalACflg == OJ_AC) && (lang < 5) ) { //bash don't supported
         sim = get_sim(solution_id, lang, p_id, sim_s_id);
     }
     else {
