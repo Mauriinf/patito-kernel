@@ -1,5 +1,14 @@
 # Patito Kernel is fork of Hustoj 
-Judge, Judge_client y sim kernel of Patito Judge
+Judge, Judge_client and sim kernel of Patito Judge
+
+## Languages supports  
+- Java
+- C
+- C++
+- C++x11
+- Python2.7
+- Python3
+- Python3.7  
 
 ## Dependencies of compile
 ```console
