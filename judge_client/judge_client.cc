@@ -57,10 +57,10 @@
 #define STD_M_LIM (STD_MB<<7)
 #define BUFFER_SIZE 512
 
-#define LOCKFILE "/var/run/judged.pid"
+#define LOCKFILE   "/var/run/judged.pid"
 #define CONFIGFILE "/home/judge/etc/judge.conf"
-#define JUDGEHOME "/home/judge/"
-#define JUDGELOG "/home/judge/log/client.log"
+#define JUDGEHOME  "/home/judge/"
+#define JUDGELOG   "/home/judge/log/client.log"
 
 #define OJ_WT0 0
 #define OJ_WT1 1
@@ -118,176 +118,198 @@
 //static int sleep_tmp;
 #define ZOJ_COM
  MYSQL *conn;
-                                //0    1     2       3      4    5     6     7       8     9     10   11     12    13  14   15   16c++11 17 py3.7
- static char lang_ext[18][8] = { "c", "cc", "pas", "java", "rb", "sh", "py", "php", "pl", "cs", "m", "bas", "scm","c","cc","py","cc",     "py" };
-//static char buf[BUFFER_SIZE];
- int data_list_has(char * file){
- 	for(int i=0;i<data_list_len;i++){
- 		if(strcmp(data_list[i],file)==0)
- 			return 1;
- 	}
- 	return 0;
- }
 
- int data_list_add(char * file){
- 	if(data_list_len<BUFFER_SIZE-1){
- 		strcpy(data_list[data_list_len],file);
- 		data_list_len++;
- 		return 0;
- 	}else{
- 		return 1;
- 	}
- }
+static char lang_ext[19][8] = {
+    "c",            //0
+    "cc",			//1
+    "pas",			//2
+    "java",			//3
+    "rb",			//4
+    "sh",			//5
+    "py",			//6
+    "php",			//7
+    "pl",			//8
+    "cs",			//9
+    "m",			//10
+    "bas",			//11
+    "scm",			//12
+    "c",			//13
+    "cc",			//14
+    "py",			//15
+    "cc",			//16
+    "py",			//17
+	"go",			//18
+};
 
- long get_file_size(const char * filename) {
- 	struct stat f_stat;
-
- 	if (stat(filename, &f_stat) == -1) {
- 		return 0;
- 	}
-
- 	return (long) f_stat.st_size;
- }
-
-void write_log(const char *_fmt, ...){
-	va_list ap;
-	char fmt[4096];
-	strncpy(fmt, _fmt, 4096);
-	char buffer[4096];
-	//      time_t          t = time(NULL);
-	//int l;
-	sprintf(buffer, "%s/log/client.log", oj_home);
-	FILE *fp = fopen(buffer, "ae+");
-	if (fp == NULL)
-	{
-		fprintf(stderr, "openfile error!\n");
-		system("pwd");
+	// static char buf[BUFFER_SIZE];
+	int data_list_has(char * file) {
+		for (int i = 0; i < data_list_len; i ++) {
+			if (strcmp(data_list[i], file) == 0) 
+				return 1;
+			
+		}
+		return 0;
 	}
-	va_start(ap, _fmt);
-	//l =
-	vsprintf(buffer, fmt, ap);
-	fprintf(fp, "%s\n", buffer);
+
+	int data_list_add(char * file) {
+		if (data_list_len < BUFFER_SIZE - 1) {
+			strcpy(data_list[data_list_len], file);
+			data_list_len ++;
+			return 0;
+		} else {
+			return 1;
+		}
+	}
+
+	long get_file_size(const char * filename) {
+		struct stat f_stat;
+
+		if (stat(filename, & f_stat) == -1) {
+			return 0;
+		}
+
+		return(long)f_stat.st_size;
+	}
+
+	void write_log(const char * _fmt, ...) {
+        va_list ap;
+        char fmt[4096];
+        strncpy(fmt, _fmt, 4096);
+        char buffer[4096];
+        // time_t          t = time(NULL);
+        // int l;
+        sprintf(buffer, "%s/log/client.log", oj_home);
+        FILE * fp = fopen(buffer, "ae+");
+        if (fp == NULL) {
+            fprintf(stderr, "openfile error!\n");
+            system("pwd");
+        }
+        va_start(ap, _fmt);
+        vsprintf(buffer, fmt, ap);
+        fprintf(fp, "%s\n", buffer);
+        if (DEBUG) 
 	if (DEBUG)
-		printf("%s\n", buffer);
-	va_end(ap);
-	fclose(fp);
-}
+        if (DEBUG) 
+            printf("%s\n", buffer);
+        
 
-int execute_cmd(const char *fmt, ...){
-	char cmd[BUFFER_SIZE];
+        va_end(ap);
+        fclose(fp);
+    }
 
-	int ret = 0;
-	va_list ap;
+	int execute_cmd(const char * fmt, ...) {
+			char cmd[BUFFER_SIZE];
 
-	va_start(ap, fmt);
-	vsprintf(cmd, fmt, ap);
-	if (DEBUG)
-		printf("%s\n", cmd);
-	ret = system(cmd);
-	va_end(ap);
-	return ret;
-}
+			int ret = 0;
+			va_list ap;
 
- const int call_array_size = 512;
+			va_start(ap, fmt);
+			vsprintf(cmd, fmt, ap);
+			if (DEBUG) 
+				printf("%s\n", cmd);
+			
+			ret = system(cmd);
+			va_end(ap);
+			return ret;
+	}
+
+ const int call_array_size         = 512;
  int call_counter[call_array_size] = { 0 };
  static char LANG_NAME[BUFFER_SIZE];
- void init_syscalls_limits(int lang) {
- 	int i;
- 	memset(call_counter, 0, sizeof(call_counter));
- 	if (DEBUG)
- 		write_log("init_call_counter:%d", lang);
-	if (record_call) { // C & C++
-		for (i = 0; i < call_array_size; i++) {
-			call_counter[i] = 0;
-		}
-	} else if (lang <= 1||lang==13||lang==14||lang == 16) { // C & C++
-		for (i = 0; i==0||LANG_CV[i]; i++) {
-			call_counter[LANG_CV[i]] = HOJ_MAX_LIMIT;
-		}
-	} else if (lang == 2) { // Pascal
-		for (i = 0; i==0||LANG_PV[i]; i++)
-			call_counter[LANG_PV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 3) { // Java
-		for (i = 0; i==0||LANG_JV[i]; i++)
-			call_counter[LANG_JV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 4) { // Ruby
-		for (i = 0; i==0||LANG_RV[i]; i++)
-			call_counter[LANG_RV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 5) { // Bash
-		for (i = 0; i==0||LANG_BV[i]; i++)
-			call_counter[LANG_BV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 6) { // Python
-		for (i = 0; i==0||LANG_YV[i]; i++)
-			call_counter[LANG_YV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 7) { // php
-		for (i = 0; i==0||LANG_PHV[i]; i++)
-			call_counter[LANG_PHV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 8) { // perl
-		for (i = 0; i==0||LANG_PLV[i]; i++)
-			call_counter[LANG_PLV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 9) { // mono c#
-		for (i = 0; i==0||LANG_CSV[i]; i++)
-			call_counter[LANG_CSV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 10) { //objective c
-		for (i = 0; i==0||LANG_OV[i]; i++)
-			call_counter[LANG_OV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 11) { //free basic
-		for (i = 0; i==0||LANG_BASICV[i]; i++)
-			call_counter[LANG_BASICV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 12) { //scheme guile
-		for (i = 0; i==0||LANG_SV[i]; i++)
-			call_counter[LANG_SV[i]] = HOJ_MAX_LIMIT;
-	} else if (lang == 15 || lang == 17) { //python3 or python3.7
-		for (i = 0; i==0||LANG_PY3[i]; i++)
-			call_counter[LANG_PY3[i]] = HOJ_MAX_LIMIT;
-	}
 
-}
-
-int after_equal(char * c) {
-	int i = 0;
-	for (; c[i] != '\0' && c[i] != '='; i++)
-		;
-	return ++i;
-}
-
-void trim(char * c) {
-	char buf[BUFFER_SIZE];
-	char * start, *end;
-	strcpy(buf, c);
-	start = buf;
-	while (isspace(*start))
-		start++;
-	end = start;
-	while (!isspace(*end))
-		end++;
-	*end = '\0';
-	strcpy(c, start);
-}
-
-bool read_buf(char * buf, const char * key, char * value) {
-	if (strncmp(buf, key, strlen(key)) == 0) {
-		strcpy(value, buf + after_equal(buf));
-		trim(value);
+	void init_syscalls_limits(int lang) {
+		int i;
+		memset(call_counter, 0, sizeof(call_counter));
 		if (DEBUG)
-			printf("%s\n", value);
-		return 1;
+			write_log("init_call_counter:%d", lang);
+		if (record_call) { // C & C++
+			for (i = 0; i < call_array_size; i++) {
+				call_counter[i] = 0;
+			}
+		} else if (lang <= 1||lang==13||lang==14||lang == 16) { // C & C++
+			for (i = 0; i==0||LANG_CV[i]; i++)
+				call_counter[LANG_CV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 2) { // Pascal
+			for (i = 0; i==0||LANG_PV[i]; i++)
+				call_counter[LANG_PV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 3) { // Java
+			for (i = 0; i==0||LANG_JV[i]; i++)
+				call_counter[LANG_JV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 4) { // Ruby
+			for (i = 0; i==0||LANG_RV[i]; i++)
+				call_counter[LANG_RV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 5) { // Bash
+			for (i = 0; i==0||LANG_BV[i]; i++)
+				call_counter[LANG_BV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 6) { // Python
+			for (i = 0; i==0||LANG_YV[i]; i++)
+				call_counter[LANG_YV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 7) { // php
+			for (i = 0; i==0||LANG_PHV[i]; i++)
+				call_counter[LANG_PHV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 8) { // perl
+			for (i = 0; i==0||LANG_PLV[i]; i++)
+				call_counter[LANG_PLV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 9) { // mono c#
+			for (i = 0; i==0||LANG_CSV[i]; i++)
+				call_counter[LANG_CSV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 10) { //objective c
+			for (i = 0; i==0||LANG_OV[i]; i++)
+				call_counter[LANG_OV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 11) { //free basic
+			for (i = 0; i==0||LANG_BASICV[i]; i++)
+				call_counter[LANG_BASICV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 12) { //scheme guile
+			for (i = 0; i==0||LANG_SV[i]; i++)
+				call_counter[LANG_SV[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 15 || lang == 17) { //python3 or python3.7
+			for (i = 0; i==0||LANG_PY3[i]; i++)
+				call_counter[LANG_PY3[i]] = HOJ_MAX_LIMIT;
+		} else if (lang == 18 ) { //go
+			for (i = 0; i==0||LANG_GOV[i]; i++)
+				call_counter[LANG_GOV[i]] = HOJ_MAX_LIMIT;
+		}
 	}
-	return 0;
-}
 
-void read_double(char *buf, const char *key, double *value){
-	char buf2[BUFFER_SIZE];
-	if (read_buf(buf, key, buf2))
-		sscanf(buf2, "%lf", value);
-}
+	int after_equal(char * c) {
+		int i = 0;
+		for (; c[i] != '\0' && c[i] != '='; i++);
+		return ++i;
+	}
 
-void read_int(char * buf, const char * key, int * value) {
-	char buf2[BUFFER_SIZE];
-	if (read_buf(buf, key, buf2))
-		sscanf(buf2, "%d", value);
+	void trim(char * c) {
+		char buf[BUFFER_SIZE];
+		char * start, *end;
+		strcpy(buf, c);
+		start = buf;
+		while(isspace(*start)) start++;
+		end = start;
+		while(!isspace(*end)) end++;
+		*end = '\0';
+		strcpy(c, start);
+	}
 
-}
+	bool read_buf(char * buf, const char * key, char * value) {
+		if(strncmp(buf, key, strlen(key)) == 0) {
+			strcpy(value, buf + after_equal(buf));
+			trim(value);
+			if(DEBUG) printf("%s\n", value);
+			return 1;
+		}
+		return 0;
+	}
+
+	void read_double(char *buf, const char *key, double *value) {
+		char buf2[BUFFER_SIZE];
+		if(read_buf(buf, key, buf2)) sscanf(buf2, "%lf", value);
+	}
+
+	void read_int(char * buf, const char * key, int * value) {
+		char buf2[BUFFER_SIZE];
+		if(read_buf(buf, key, buf2)) sscanf(buf2, "%d", value);
+
+	}
+
 
 // read the configue file
 void init_mysql_conf() {
@@ -493,7 +515,7 @@ const char * getFileNameFromPath(const char * path) {
 #ifdef ZOJ_COM
 	//compare ported and improved from zoj don't limit file size
  	if(DEBUG)
-	 printf("compile end!\n");
+	 printf("Compile end! and Compare ZOj init\n");
  	return compare_zoj(file1, file2);
 #endif
 #ifndef ZOJ_COM
@@ -750,14 +772,10 @@ void umount(char *work_dir){
 int compile(int lang, char *work_dir) {
 	int pid;
 
-	const char * CP_C[] = { "gcc", "Main.c", "-o", "Main", "-fno-asm", "-Wall",	"-lm", "--static", "-std=c99", "-DONLINE_JUDGE", NULL };
+	const char * CP_C[] = { "gcc", "Main.c", "-o", "Main", "-fno-asm", "-Wall",	"-lm", "--static", "-std=c++0x", "-DONLINE_JUDGE", NULL };
 	const char * CP_X[] = { "g++", "Main.cc", "-o", "Main", "-fno-asm", "-Wall", "-lm", "--static", "-DONLINE_JUDGE", NULL };
-//	{ "fpc", "Main.pas", "-O2", "-Co", "-Ct", "-Ci", NULL };
-//      const char * CP_J[] = { "javac", "-J-Xms32m", "-J-Xmx256m","-encoding","UTF-8", "Main.java",NULL };
-
 	const char * CP_R[] = { "ruby", "-c", "Main.rb", NULL };
 	const char * CP_B[] = { "chmod", "+rx", "Main.sh", NULL };
-	//const char * CP_Y[] = { "python2.7", "-c",	"import py_compile; py_compile.compile(r'Main.py')", NULL };
 	const char * CP_PH[] = { "php", "-l", "Main.php", NULL };
 	const char * CP_PL[] = { "perl", "-c", "Main.pl", NULL };
 	const char * CP_CS[] = { "gmcs", "-warn:0", "Main.cs", NULL };
@@ -765,10 +783,10 @@ int compile(int lang, char *work_dir) {
 	const char * CP_BS[] = { "fbc", "Main.bas", NULL };
 	const char * CP_CLANG[]={"clang", "Main.c", "-o", "Main", "-fno-asm", "-Wall", "-lm", "--static", "-std=c99", "-DONLINE_JUDGE", NULL };
 	const char * CP_CLANG_CPP[]={"clang++", "Main.cc", "-o", "Main", "-fno-asm", "-Wall", "-lm", "--static", "-std=c++0x",  "-DONLINE_JUDGE", NULL };
-//	const char * CP_PY3[] = { "python3", "-c",	"import py_compile; py_compile.compile(r'Main.py')", NULL };
-
 	const char * CP_X11[] = { "g++", "Main.cc", "-o", "Main", "-fno-asm", "-Wall","-lm", "--static", "-std=c++11", "-DONLINE_JUDGE", NULL };
-
+    const char * CP_GO[]   = {"go", "build", "-o", "Main", "Main.go", NULL};
+    //const char * CP_PY[]   = {"python3.7", "Main.py", NULL};
+	
 	char javac_buf[7][16];
 	char *CP_J[7];
 
@@ -802,9 +820,9 @@ int compile(int lang, char *work_dir) {
 			LIM.rlim_cur = STD_MB << 10;
 		}
 		setrlimit(RLIMIT_AS, &LIM);
+		
 		if (lang != 2 && lang != 11) {
 			freopen("ce.txt", "w", stderr);
-			//freopen("/dev/null", "w", stdout);
 		} else {
 			freopen("ce.txt", "w", stdout);
 		}
@@ -812,7 +830,6 @@ int compile(int lang, char *work_dir) {
 		while(setgid(1536)!=0) sleep(1);
 		while(setuid(1536)!=0) sleep(1);
 		while(setresuid(1536, 1536, 1536)!=0) sleep(1);
-
 		switch (lang) {
 			case 0:
 			execvp(CP_C[0], (char * const *) CP_C);
@@ -820,9 +837,6 @@ int compile(int lang, char *work_dir) {
 			case 1:
 			execvp(CP_X[0], (char * const *) CP_X);
 			break;
-		//	case 2:
-		//	execvp(CP_P[0], (char * const *) CP_P);
-		//	break;
 			case 3:
 			execvp(CP_J[0], (char * const *) CP_J);
 			break;
@@ -832,9 +846,6 @@ int compile(int lang, char *work_dir) {
 			case 5:
 			execvp(CP_B[0], (char * const *) CP_B);
 			break;
-			//case 6:
-			//execvp(CP_Y[0], (char * const *) CP_Y);
-			//break;
 			case 7:
 			execvp(CP_PH[0], (char * const *) CP_PH);
 			break;
@@ -857,27 +868,25 @@ int compile(int lang, char *work_dir) {
 			case 14:
 			execvp(CP_CLANG_CPP[0], (char * const *) CP_CLANG_CPP);
 			break;
-			//case 15:
-			//execvp(CP_PY3[0], (char * const *) CP_PY3);
-			//break;
 			case 16:
 			execvp(CP_X11[0], (char * const *) CP_X11);
+			break;
+			case 18:
+			execvp(CP_GO[0], (char *const *)CP_GO);
 			break;
 			default:
 			printf("nothing to do!\n");
 		}
 		if (DEBUG)
-			printf("compile end!\n");
-		//exit(!system("cat ce.txt"));
+			printf("compile end Line 883!\n");
 		exit(0);
 	} else {
 		int status = 0;
-
 		waitpid(pid, &status, 0);
 		if (lang > 3 && lang < 7)
 			status = get_file_size("ce.txt");
 		if (DEBUG)
-			printf("status=%d\n", status);
+			printf("status=%d Line 895\n", status);
 		execute_cmd("/bin/umount -f bin usr lib lib64 etc/alternatives proc dev 2>/dev/null");
 		execute_cmd("/bin/umount -f %s/* 2>/dev/null", work_dir);
 		umount(work_dir);
@@ -885,18 +894,7 @@ int compile(int lang, char *work_dir) {
 	}
 
 }
-/*
- int read_proc_statm(int pid){
- FILE * pf;
- char fn[4096];
- int ret;
- sprintf(fn,"/proc/%d/statm",pid);
- pf=fopen(fn,"r");
- fscanf(pf,"%d",&ret);
- fclose(pf);
- return ret;
- }
- */
+
  int get_proc_status(int pid, const char * mark) {
  	FILE * pf;
  	char fn[BUFFER_SIZE], buf[BUFFER_SIZE];
@@ -915,8 +913,8 @@ int compile(int lang, char *work_dir) {
  		fclose(pf);
  	return ret;
  }
- int init_mysql_conn() {
 
+ int init_mysql_conn() {
  	conn = mysql_init(NULL);
 	//mysql_real_connect(conn,host_name,user_name,password,db_name,port_number,0,0);
  	const char timeout = 30;
@@ -934,6 +932,7 @@ int compile(int lang, char *work_dir) {
  }
  return 1;
 }
+
 void _get_solution_mysql(int solution_id, char * work_dir, int lang) {
 	char sql[BUFFER_SIZE], src_pth[BUFFER_SIZE];
 	// get the source code
@@ -985,8 +984,7 @@ void get_custominput(int solution_id, char * work_dir) {
 	_get_custominput_mysql(solution_id, work_dir);
 }
 
-void _get_solution_info_mysql(int solution_id, int & p_id, char * user_id,
-	int & lang) {
+void _get_solution_info_mysql(int solution_id, int & p_id, char * user_id, int & lang) {
 
 	MYSQL_RES *res;
 	MYSQL_ROW row;
@@ -1011,15 +1009,12 @@ void get_solution_info(int solution_id, int & p_id, char * user_id, int & lang) 
 	_get_solution_info_mysql(solution_id, p_id, user_id, lang);
 }
 
-void _get_problem_info_mysql(int p_id, int & time_lmt, int & mem_lmt,
-	int & isspj) {
+void _get_problem_info_mysql(int p_id, int & time_lmt, int & mem_lmt, int & isspj) {
 	// get the problem info from Table:problem
 	char sql[BUFFER_SIZE];
 	MYSQL_RES *res;
 	MYSQL_ROW row;
-	sprintf(sql,
-		"SELECT time_limit,memory_limit,spj FROM problem where problem_id=%d",
-		p_id);
+	sprintf(sql,"SELECT time_limit,memory_limit,spj FROM problem where problem_id=%d",p_id);
 	mysql_real_query(conn, sql, strlen(sql));
 	res = mysql_store_result(conn);
 	row = mysql_fetch_row(res);
@@ -1038,7 +1033,6 @@ void get_problem_info(int p_id, int & time_lmt, int & mem_lmt, int & isspj) {
 
 void prepare_files(char * filename, int namelen, char * infile, int & p_id,
 	char * work_dir, char * outfile, char * userfile, int runner_id) {
-	//              printf("ACflg=%d %d check a file!\n",ACflg,solution_id);
 
 	char fname[BUFFER_SIZE];
 	strncpy(fname, filename, namelen);
@@ -1071,74 +1065,31 @@ void copy_objc_runtime(char * work_dir) {
 	execute_cmd("/bin/mkdir -p %s/proc", work_dir);
 	execute_cmd("/bin/mount -o bind /proc %s/proc", work_dir);
 	execute_cmd("/bin/mkdir -p %s/lib/", work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/libdbus-1.so.3                          %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/libgcc_s.so.1                           %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/libgcrypt.so.11                         %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/libgpg-error.so.0                       %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/libz.so.1                               %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/tls/i686/cmov/libc.so.6                 %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/tls/i686/cmov/libdl.so.2                %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/tls/i686/cmov/libm.so.6                 %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/tls/i686/cmov/libnsl.so.1               %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/tls/i686/cmov/libpthread.so.0           %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /lib/tls/i686/cmov/librt.so.1                %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /usr/lib/libavahi-client.so.3                %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /usr/lib/libavahi-common.so.3                %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /usr/lib/libdns_sd.so.1                      %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /usr/lib/libffi.so.5                         %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /usr/lib/libgnustep-base.so.1.19             %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /usr/lib/libgnutls.so.26                     %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /usr/lib/libobjc.so.2                        %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /usr/lib/libtasn1.so.3                       %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /usr/lib/libxml2.so.2                        %s/lib/ ",
-		work_dir);
-	execute_cmd(
-		"/bin/cp -aL /usr/lib/libxslt.so.1                        %s/lib/ ",
-		work_dir);
+	execute_cmd("/bin/cp -aL /lib/libdbus-1.so.3 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /lib/libgcc_s.so.1 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /lib/libgcrypt.so.11 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /lib/libgpg-error.so.0 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /lib/libz.so.1 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /lib/tls/i686/cmov/libc.so.6 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /lib/tls/i686/cmov/libdl.so.2 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /lib/tls/i686/cmov/libm.so.6 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /lib/tls/i686/cmov/libnsl.so.1 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /lib/tls/i686/cmov/libpthread.so.0 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /lib/tls/i686/cmov/librt.so.1 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /usr/lib/libavahi-client.so.3 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /usr/lib/libavahi-common.so.3 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /usr/lib/libdns_sd.so.1 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /usr/lib/libffi.so.5 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /usr/lib/libgnustep-base.so.1.19 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /usr/lib/libgnutls.so.26 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /usr/lib/libobjc.so.2 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /usr/lib/libtasn1.so.3 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /usr/lib/libxml2.so.2 %s/lib/ ", work_dir);
+	execute_cmd("/bin/cp -aL /usr/lib/libxslt.so.1 %s/lib/ ", work_dir);
+
 
 }
 void copy_bash_runtime(char * work_dir) {
-	//char cmd[BUFFER_SIZE];
-	//const char * ruby_run="/usr/bin/ruby";
 	copy_shell_runtime(work_dir);
 	execute_cmd("/bin/cp `which bc`  %s/bin/", work_dir);
 	execute_cmd("busybox dos2unix Main.sh", work_dir);
@@ -1183,10 +1134,8 @@ void copy_guile_runtime(char * work_dir) {
 	execute_cmd("/bin/cp -a /usr/share/guile %s/usr/share/", work_dir);
 	execute_cmd("/bin/cp /usr/lib/libguile* %s/usr/lib/", work_dir);
 	execute_cmd("/bin/cp /usr/lib/libgc* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/i386-linux-gnu/libffi* %s/usr/lib/",
-		work_dir);
-	execute_cmd("/bin/cp /usr/lib/i386-linux-gnu/libunistring* %s/usr/lib/",
-		work_dir);
+	execute_cmd("/bin/cp /usr/lib/i386-linux-gnu/libffi* %s/usr/lib/", work_dir);
+	execute_cmd("/bin/cp /usr/lib/i386-linux-gnu/libunistring* %s/usr/lib/", work_dir);
 	execute_cmd("/bin/cp /usr/lib/*/libgmp* %s/usr/lib/", work_dir);
 	execute_cmd("/bin/cp /usr/lib/libgmp* %s/usr/lib/", work_dir);
 	execute_cmd("/bin/cp /usr/lib/*/libltdl* %s/usr/lib/", work_dir);
@@ -1194,151 +1143,133 @@ void copy_guile_runtime(char * work_dir) {
 	execute_cmd("/bin/cp /usr/bin/guile* %s/", work_dir);
 
 }
+void copy_python_runtime(char *work_dir) {
 
-void copy_python_runtime(char *work_dir){
+    copy_shell_runtime(work_dir);
+    execute_cmd("mkdir -p %s/usr/include", work_dir);
+    execute_cmd("mkdir -p %s/dev", work_dir);
+    execute_cmd("mkdir -p %s/usr/lib", work_dir);
+    execute_cmd("mkdir -p %s/usr/lib64", work_dir);
+    execute_cmd("mkdir -p %s/usr/local/lib", work_dir);
 
-	copy_shell_runtime(work_dir);
-	execute_cmd("mkdir -p %s/usr/include", work_dir);
-	execute_cmd("mkdir -p %s/dev", work_dir);
-	execute_cmd("mkdir -p %s/usr/lib", work_dir);
-	execute_cmd("mkdir -p %s/usr/lib64", work_dir);
-	execute_cmd("mkdir -p %s/usr/local/lib", work_dir);
+    execute_cmd("mkdir -p %s/etc/abrt", work_dir);
+    execute_cmd("mkdir -p %s/etc/abrt/plugins", work_dir);
+    execute_cmd("cp -a /etc/abrt/plugins/python.conf %s/etc/abrt/plugins/python.conf", work_dir);
 
-	// /etc/abrt/plugins/python.conf for Centos7
-	execute_cmd("mkdir -p %s/etc/abrt", work_dir);
-	execute_cmd("mkdir -p %s/etc/abrt/plugins", work_dir);
-	execute_cmd("cp -a /etc/abrt/plugins/python.conf %s/etc/abrt/plugins/python.conf", work_dir);
-	
-	// /usr/share/abrt/conf.d/plugins/python.conf for Centos7
-	execute_cmd("mkdir -p %s/usr/share", work_dir);
-	execute_cmd("mkdir -p %s/usr/share/abrt/", work_dir);
-	execute_cmd("mkdir -p %s/usr/share/abrt/conf.d", work_dir);
-	execute_cmd("mkdir -p %s/usr/share/abrt/conf.d/plugins", work_dir);
-	execute_cmd("cp -a /usr/share/abrt/conf.d/plugins/python.conf %s/usr/share/abrt/conf.d/plugins/python.conf", work_dir);
-	
-	execute_cmd("cp /usr/bin/python* %s/", work_dir);
-	execute_cmd("cp -a /usr/lib/python* %s/usr/lib/", work_dir);
-	execute_cmd("cp -a /usr/lib64/python* %s/usr/lib64/", work_dir);
-	execute_cmd("cp -a /usr/local/lib/python* %s/usr/local/lib/", work_dir);
-	execute_cmd("cp -a /usr/include/python* %s/usr/include/", work_dir);
-	execute_cmd("cp -a /usr/lib/libpython* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/mkdir -p %s/home/judge", work_dir);
-	execute_cmd("/bin/chown judge %s", work_dir);
-	execute_cmd("/bin/mkdir -p %s/etc", work_dir);
-	execute_cmd("/bin/grep judge /etc/passwd>%s/etc/passwd", work_dir);
-	execute_cmd("/bin/mount -o bind /dev %s/dev", work_dir);
-	execute_cmd("/bin/mount -o remount,ro %s/dev", work_dir);
+    execute_cmd("mkdir -p %s/usr/share", work_dir);
+    execute_cmd("mkdir -p %s/usr/share/abrt/", work_dir);
+    execute_cmd("mkdir -p %s/usr/share/abrt/conf.d", work_dir);
+    execute_cmd("mkdir -p %s/usr/share/abrt/conf.d/plugins", work_dir);
+    execute_cmd("cp -a /usr/share/abrt/conf.d/plugins/python.conf %s/usr/share/abrt/conf.d/plugins/python.conf", work_dir);
+
+    execute_cmd("cp /usr/bin/python* %s/", work_dir);
+    execute_cmd("cp -a /usr/lib/python* %s/usr/lib/", work_dir);
+    execute_cmd("cp -a /usr/lib64/python* %s/usr/lib64/", work_dir);
+    execute_cmd("cp -a /usr/local/lib/python* %s/usr/local/lib/", work_dir);
+    execute_cmd("cp -a /usr/include/python* %s/usr/include/", work_dir);
+    execute_cmd("cp -a /usr/lib/libpython* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/mkdir -p %s/home/judge", work_dir);
+    execute_cmd("/bin/chown judge %s", work_dir);
+    execute_cmd("/bin/mkdir -p %s/etc", work_dir);
+    execute_cmd("/bin/grep judge /etc/passwd>%s/etc/passwd", work_dir);
+    execute_cmd("/bin/mount -o bind /dev %s/dev", work_dir);
+    execute_cmd("/bin/mount -o remount, ro %s/dev", work_dir);
 }
 
 void copy_php_runtime(char * work_dir) {
 
-	copy_shell_runtime(work_dir);
-	execute_cmd("/bin/mkdir %s/usr", work_dir);
-	execute_cmd("/bin/mkdir %s/usr/lib", work_dir);
-	execute_cmd("/bin/cp /usr/lib/libedit* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/libdb* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/libgssapi_krb5* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/libkrb5* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/libk5crypto* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/*/libedit* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/*/libdb* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/*/libgssapi_krb5* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/*/libkrb5* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/*/libk5crypto* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/libxml2* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/lib/x86_64-linux-gnu/libxml2.so* %s/usr/lib/",
-		work_dir);
-	execute_cmd("/bin/cp /usr/bin/php* %s/", work_dir);
-	execute_cmd("chmod +rx %s/Main.php", work_dir);
+    copy_shell_runtime(work_dir);
+    execute_cmd("/bin/mkdir %s/usr", work_dir);
+    execute_cmd("/bin/mkdir %s/usr/lib", work_dir);
+    execute_cmd("/bin/cp /usr/lib/libedit* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/libdb* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/libgssapi_krb5* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/libkrb5* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/libk5crypto* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/*/libedit* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/*/libdb* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/*/libgssapi_krb5* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/*/libkrb5* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/*/libk5crypto* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/libxml2* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/x86_64-linux-gnu/libxml2.so* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/bin/php* %s/", work_dir);
+    execute_cmd("chmod +rx %s/Main.php", work_dir);
 
 }
 void copy_perl_runtime(char * work_dir) {
 
-	copy_shell_runtime(work_dir);
-	execute_cmd("/bin/mkdir %s/usr", work_dir);
-	execute_cmd("/bin/mkdir %s/usr/lib", work_dir);
-	execute_cmd("/bin/cp /usr/lib/libperl* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/bin/perl* %s/", work_dir);
+    copy_shell_runtime(work_dir);
+    execute_cmd("/bin/mkdir %s/usr", work_dir);
+    execute_cmd("/bin/mkdir %s/usr/lib", work_dir);
+    execute_cmd("/bin/cp /usr/lib/libperl* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/bin/perl* %s/", work_dir);
 
 }
 void copy_freebasic_runtime(char * work_dir) {
 
-	copy_shell_runtime(work_dir);
-	execute_cmd("/bin/mkdir -p %s/usr/local/lib", work_dir);
-	execute_cmd("/bin/mkdir -p %s/usr/local/bin", work_dir);
-	execute_cmd("/bin/cp /usr/local/lib/freebasic %s/usr/local/lib/", work_dir);
-	execute_cmd("/bin/cp /usr/local/bin/fbc %s/", work_dir);
-	execute_cmd("/bin/cp -a /lib32/* %s/lib/", work_dir);
+    copy_shell_runtime(work_dir);
+    execute_cmd("/bin/mkdir -p %s/usr/local/lib", work_dir);
+    execute_cmd("/bin/mkdir -p %s/usr/local/bin", work_dir);
+    execute_cmd("/bin/cp /usr/local/lib/freebasic %s/usr/local/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/local/bin/fbc %s/", work_dir);
+    execute_cmd("/bin/cp -a /lib32/* %s/lib/", work_dir);
 
 }
 void copy_mono_runtime(char * work_dir) {
 
-	copy_shell_runtime(work_dir);
-	execute_cmd("/bin/mkdir %s/usr", work_dir);
-	execute_cmd("/bin/mkdir %s/proc", work_dir);
-	execute_cmd("/bin/mkdir -p %s/usr/lib/mono/2.0", work_dir);
-	execute_cmd("/bin/cp -a /usr/lib/mono %s/usr/lib/", work_dir);
-	execute_cmd("/bin/mkdir -p %s/usr/lib64/mono/2.0", work_dir);
-	execute_cmd("/bin/cp -a /usr/lib64/mono %s/usr/lib64/", work_dir);
+    copy_shell_runtime(work_dir);
+    execute_cmd("/bin/mkdir %s/usr", work_dir);
+    execute_cmd("/bin/mkdir %s/proc", work_dir);
+    execute_cmd("/bin/mkdir -p %s/usr/lib/mono / 2.0", work_dir);
+    execute_cmd("/bin/cp -a /usr/lib/mono %s/usr/lib/", work_dir);
+    execute_cmd("/bin/mkdir -p %s/usr/lib64/mono / 2.0", work_dir);
+    execute_cmd("/bin/cp -a /usr/lib64/mono %s/usr/lib64/", work_dir);
 
-	execute_cmd("/bin/cp /usr/lib/libgthread* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /usr/lib/libgthread* %s/usr/lib/", work_dir);
 
-	execute_cmd("/bin/mount -o bind /proc %s/proc", work_dir);
-	execute_cmd("/bin/cp /usr/bin/mono* %s/", work_dir);
+    execute_cmd("/bin/mount -o bind /proc %s/proc", work_dir);
+    execute_cmd("/bin/cp /usr/bin/mono* %s/", work_dir);
 
-	execute_cmd("/bin/cp /usr/lib/libgthread* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/cp /lib/libglib* %s/lib/", work_dir);
-	execute_cmd("/bin/cp /lib/tls/i686/cmov/lib* %s/lib/tls/i686/cmov/",
-		work_dir);
-	execute_cmd("/bin/cp /lib/libpcre* %s/lib/", work_dir);
-	execute_cmd("/bin/cp /lib/ld-linux* %s/lib/", work_dir);
-	execute_cmd("/bin/cp /lib64/ld-linux* %s/lib64/", work_dir);
-	execute_cmd("/bin/mkdir -p %s/home/judge", work_dir);
-	execute_cmd("/bin/chown judge %s/home/judge", work_dir);
-	execute_cmd("/bin/mkdir -p %s/etc", work_dir);
-	execute_cmd("/bin/grep judge /etc/passwd>%s/etc/passwd", work_dir);
+    execute_cmd("/bin/cp /usr/lib/libgthread* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/cp /lib/libglib* %s/lib/", work_dir);
+    execute_cmd("/bin/cp /lib/tls/i686/cmov/lib* %s/lib/tls/i686/cmov/", work_dir);
+    execute_cmd("/bin/cp /lib/libpcre* %s/lib/", work_dir);
+    execute_cmd("/bin/cp /lib/ld-linux* %s/lib/", work_dir);
+    execute_cmd("/bin/cp /lib64/ld-linux* %s/lib64/", work_dir);
+    execute_cmd("/bin/mkdir -p %s/home/judge", work_dir);
+    execute_cmd("/bin/chown judge %s/home/judge", work_dir);
+    execute_cmd("/bin/mkdir -p %s/etc", work_dir);
+    execute_cmd("/bin/grep judge /etc/passwd>%s/etc/passwd", work_dir);
 
 }
 
 void copy_python3_runtime(char * work_dir) {
 
-	//execute_cmd("mknod -m 444 /dev/urandom c 1 9");
-	//execute_cmd("mknod -m 444 /dev/urandom c 1 8");
     copy_shell_runtime(work_dir);
- 	execute_cmd("mkdir -p %s/usr/include", work_dir);
-	execute_cmd("mkdir -p %s/dev", work_dir);
-	execute_cmd("mkdir -p %s/usr/lib", work_dir);
-	execute_cmd("mkdir -p %s/usr/lib64", work_dir);
-	execute_cmd("mkdir -p %s/usr/local/lib", work_dir);
-/*
-	// /etc/abrt/plugins/python.conf for Centos7
-	execute_cmd("mkdir -p %s/etc/abrt", work_dir);
-	execute_cmd("mkdir -p %s/etc/abrt/plugins", work_dir);
-	execute_cmd("cp -a /etc/abrt/plugins/python.conf %s/etc/abrt/plugins/python.conf", work_dir);
-	
-	// /usr/share/abrt/conf.d/plugins/python.conf for Centos7
-	execute_cmd("mkdir -p %s/usr/share", work_dir);
-	execute_cmd("mkdir -p %s/usr/share/abrt/", work_dir);
-	execute_cmd("mkdir -p %s/usr/share/abrt/conf.d", work_dir);
-	execute_cmd("mkdir -p %s/usr/share/abrt/conf.d/plugins", work_dir);
-	execute_cmd("cp -a /usr/share/abrt/conf.d/plugins/python.conf %s/usr/share/abrt/conf.d/plugins/python.conf", work_dir);
-*/	
-	execute_cmd("cp /usr/bin/python* %s/", work_dir);
-	execute_cmd("cp -a /usr/lib/python* %s/usr/lib/", work_dir);
-	execute_cmd("cp -a /usr/lib64/python* %s/usr/lib64/", work_dir);
-	execute_cmd("cp -a /usr/local/lib/python* %s/usr/local/lib/", work_dir);
-	execute_cmd("cp -a /usr/include/python* %s/usr/include/", work_dir);
-	execute_cmd("cp -a /usr/lib/libpython* %s/usr/lib/", work_dir);
-	execute_cmd("/bin/mkdir -p %s/home/judge", work_dir);
-	execute_cmd("/bin/chown judge %s", work_dir);
-	execute_cmd("/bin/mkdir -p %s/etc", work_dir);
-	execute_cmd("/bin/grep judge /etc/passwd>%s/etc/passwd", work_dir);
-	execute_cmd("/bin/mount -o bind /dev %s/dev", work_dir);
-    execute_cmd("/bin/mount -o remount,ro %s/dev", work_dir);
+    execute_cmd("mkdir -p %s/usr/include", work_dir);
+    execute_cmd("mkdir -p %s/dev", work_dir);
+    execute_cmd("mkdir -p %s/usr/lib", work_dir);
+    execute_cmd("mkdir -p %s/usr/lib64", work_dir);
+    execute_cmd("mkdir -p %s/usr/local/lib", work_dir);
+    execute_cmd("cp /usr/bin/python* %s/", work_dir);
+    execute_cmd("cp -a /usr/lib/python* %s/usr/lib/", work_dir);
+    execute_cmd("cp -a /usr/lib64/python* %s/usr/lib64/", work_dir);
+    execute_cmd("cp -a /usr/local/lib/python* %s/usr/local/lib/", work_dir);
+    execute_cmd("cp -a /usr/include/python* %s/usr/include/", work_dir);
+    execute_cmd("cp -a /usr/lib/libpython* %s/usr/lib/", work_dir);
+    execute_cmd("/bin/mkdir -p %s/home/judge", work_dir);
+    execute_cmd("/bin/chown judge %s", work_dir);
+    execute_cmd("/bin/mkdir -p %s/etc", work_dir);
+    execute_cmd("/bin/grep judge /etc/passwd>%s/etc/passwd", work_dir);
+    execute_cmd("/bin/mount -o bind /dev %s/dev", work_dir);
+    execute_cmd("/bin/mount -o remount, ro %s/dev", work_dir);
 
 }
 
+
 void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,int & mem_lmt) {
+	
 	nice(19);
 	// now the user is "judger"
 	chdir(work_dir);
@@ -1380,6 +1311,7 @@ void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,in
 	setrlimit(RLIMIT_FSIZE, &LIM);
 	// proc limit
 	switch (lang) {
+	case 18:
 	case 3:  //java
 	case 12:
 	LIM.rlim_cur = LIM.rlim_max = 50;
@@ -1405,113 +1337,91 @@ LIM.rlim_cur = STD_MB * mem_lmt / 2 * 3;
 LIM.rlim_max = STD_MB * mem_lmt * 2;
 if (lang < 3 || lang == 16) //c,++ y c++11
 	setrlimit(RLIMIT_AS, &LIM);
-
-switch (lang) {
-	case 0:
-	case 1:
-	case 2:
-	case 10:
-	case 11:
-	case 13:
-	case 14:
-	case 16:
-	execl("./Main", "./Main", (char *) NULL);
-	break;
-	case 3:
-//              sprintf(java_p1, "-Xms%dM", mem_lmt / 2);
-//              sprintf(java_p2, "-Xmx%dM", mem_lmt);
-
-	execl("/usr/bin/java", "/usr/bin/java", java_xms, java_xmx,
-		"-Djava.security.manager",
-		"-Djava.security.policy=./java.policy", "Main", (char *) NULL);
-	break;
-	case 4:
-		//system("/ruby Main.rb<data.in");
-	execl("/ruby", "/ruby", "Main.rb", (char *) NULL);
-	break;
-	case 5: //bash
-	execl("/bin/bash", "/bin/bash", "Main.sh", (char *) NULL);
-	break;
-	case 6: //Python
-	execl("/opt/anaconda3/bin/python2.7", "/opt/anaconda3/bin/python2.7", "Main.py", (char *) NULL);
-	break;
-	case 7: //php
-	execl("/php", "/php", "Main.php", (char *) NULL);
-	break;
-	case 8: //perl
-	execl("/perl", "/perl", "Main.pl", (char *) NULL);
-	break;
-	case 9: //Mono C#
-	execl("/mono", "/mono", "--debug", "Main.exe", (char *) NULL);
-	break;
-	case 12: //guile
-	execl("/guile", "/guile", "Main.scm", (char *) NULL);
-	break;
-	case 15: //PYTHON3
-	execl("/opt/anaconda3/bin/python3", "/opt/anaconda3/bin/python3", "Main.py", (char *) NULL);
+switch(lang) {
+    case 0: case 1: case 2: case 10: case 11: case 13: case 14: case 18: case 16: execl("./Main", "./Main", (char *) NULL);
+    break;
+    case 3: 
+	execl("/usr/bin/java", "/usr/bin/java", java_xms, java_xmx, "-Djava.security.manager", "-Djava.security.policy=./java.policy", "Main", (char *) NULL);
+    break;
+    case 4:
+    execl("/ruby", "/ruby", "Main.rb", (char *) NULL);
+    break;
+    case 5: // bash
+    execl("/bin/bash", "/bin/bash", "Main.sh", (char *) NULL);
+    break;
+    case 6: // Python
+    execl("/usr/bin/python2.7", "-m", "/usr/bin/python2.7", "Main.py", (char *) NULL);
+    break;
+    case 7: // php
+    execl("/php", "/php", "Main.php", (char *) NULL);
+    break;
+    case 8: // perl
+    execl("/perl", "/perl", "Main.pl", (char *) NULL);
+    break;
+    case 9: // Mono C#
+    execl("/mono", "/mono", "--debug", "Main.exe", (char *) NULL);
+    break;
+    case 12: // guile
+    execl("/guile", "/guile", "Main.scm", (char *) NULL);
+    break;
+    case 15: //PYTHON3
+	execl("/usr/bin/python3", "/usr/bin/python3", "Main.py", (char *) NULL);
 	break;
 	case 17: //PYTHON3.7
-	execl("/opt/anaconda3/bin/python3.7", "/opt/anaconda3/bin/python3.7", "Main.py", (char *) NULL);
+	execl("/usr/bin/python3.7", "/usr/bin/python3.7", "Main.py", (char *) NULL);
 	break;
 
 }
-	//sleep(1);
 exit(0);
 }
 
-int fix_python_mis_judge(char *work_dir, int & ACflg, int & topmemory,
-                int mem_lmt) {
-        int comp_res = OJ_AC;
+int fix_python_mis_judge(char *work_dir, int & ACflg, int & topmemory, int mem_lmt) {
+    int comp_res = OJ_AC;
 
-        comp_res = execute_cmd("/bin/grep 'MemoryError'  %s/error.out", work_dir);
+    comp_res = execute_cmd("/bin/grep 'MemoryError' %s/error.out", work_dir);
 
-        if (!comp_res) {
-                printf("Python need more Memory!");
-                ACflg = OJ_ML;
-                topmemory = mem_lmt * STD_MB;
-        }
+    if(!comp_res) {
+        printf("Python need more Memory!");
+        ACflg = OJ_ML;
+        topmemory = mem_lmt * STD_MB;
+    }
 
-        return comp_res;
+    return comp_res;
 }
 
-int fix_java_mis_judge(char *work_dir, int & ACflg, int & topmemory,
-	int mem_lmt) {
-	int comp_res = OJ_AC;
-	if (DEBUG)
-		execute_cmd("cat %s/error.out", work_dir);
-	comp_res = execute_cmd("/bin/grep 'Exception'  %s/error.out", work_dir);
-	if (!comp_res) {
-		printf("Exception reported\n");
-		ACflg = OJ_RE;
-	}
+int fix_java_mis_judge(char *work_dir, int & ACflg, int & topmemory, int mem_lmt) {
+    int comp_res = OJ_AC;
+    if(DEBUG) execute_cmd("cat %s/error.out", work_dir);
+    comp_res = execute_cmd("/bin/grep 'Exception' %s/error.out", work_dir);
+    if(!comp_res) {
+        printf("Exception reported\n");
+        ACflg = OJ_RE;
+    }
 
-	comp_res = execute_cmd(
-		"/bin/grep 'java.lang.OutOfMemoryError'  %s/error.out", work_dir);
+    comp_res = execute_cmd("/bin/grep 'java.lang.OutOfMemoryError' %s/error.out", work_dir);
 
-	if (!comp_res) {
-		printf("JVM need more Memory!");
-		ACflg = OJ_ML;
-		topmemory = mem_lmt * STD_MB;
-	}
-	comp_res = execute_cmd(
-		"/bin/grep 'java.lang.OutOfMemoryError'  %s/user.out", work_dir);
+    if(!comp_res) {
+        printf("JVM need more Memory!");
+        ACflg = OJ_ML;
+        topmemory = mem_lmt * STD_MB;
+    }
+    comp_res = execute_cmd("/bin/grep 'java.lang.OutOfMemoryError' %s/user.out", work_dir);
 
-	if (!comp_res) {
-		printf("JVM need more Memory or Threads!");
-		ACflg = OJ_ML;
-		topmemory = mem_lmt * STD_MB;
-	}
-	comp_res = execute_cmd("/bin/grep 'Could not create'  %s/error.out",
-		work_dir);
-	if (!comp_res) {
-		printf("jvm need more resource,tweak -Xmx(OJ_JAVA_BONUS) Settings");
-		ACflg = OJ_RE;
-		//topmemory=0;
-	}
-	return comp_res;
+    if(!comp_res) {
+        printf("JVM need more Memory or Threads!");
+        ACflg = OJ_ML;
+        topmemory = mem_lmt * STD_MB;
+    }
+    comp_res = execute_cmd("/bin/grep 'Could not create' %s/error.out", work_dir);
+    if(!comp_res) {
+        printf("jvm need more resource, tweak -Xmx(OJ_JAVA_BONUS) Settings");
+        ACflg = OJ_RE;
+        // topmemory=0;
+    }
+    return comp_res;
 }
-int special_judge(char* oj_home, int problem_id, char *infile, char *outfile,
-	char *userfile) {
+
+int special_judge(char* oj_home, int problem_id, char *infile, char *outfile, char *userfile) {
 
 	pid_t pid;
 	printf("pid=%d\n", problem_id);
@@ -1620,13 +1530,6 @@ void print_runtimeerror(char * err) {
 	fprintf(ferr, "Runtime Error:%s\n", err);
 	fclose(ferr);
 }
-void clean_session(pid_t p) {
-	//char cmd[BUFFER_SIZE];
-	const char *pre = "ps awx -o \"\%p \%P\"|grep -w ";
-	const char *post = " | awk \'{ print $1  }\'|xargs kill -9";
-	execute_cmd("%s %d %s", pre, p, post);
-	execute_cmd("ps aux |grep \\^judge|awk '{print $2}'|xargs kill");
-}
 
 void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
 	char * userfile, char * outfile, int solution_id, int lang,
@@ -1636,7 +1539,7 @@ void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
 	int tempmemory;
 
 	if (DEBUG)
-		printf("pid=%d judging %s\n", pidApp, infile);
+		printf("watch_solution pid=%d judging %s\n", pidApp, infile);
 
 	int status, sig, exitcode;
 	struct user_regs_struct reg;
@@ -1672,9 +1575,10 @@ void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
 			break;
 		}
 
-		if (!isspj
-			&& get_file_size(userfile)
-			> get_file_size(outfile) * 2 + 1024) {
+		if (!isspj && get_file_size(userfile) > get_file_size(outfile) * 4 + 1024) {
+            if (DEBUG){
+                printf("get_file_size(%s)=%ld > get_file_size(%s) %ld\n", userfile,get_file_size(userfile),outfile,get_file_size(outfile) * 4 + 1024 );
+            }
 			ACflg = OJ_OL;
 		ptrace(PTRACE_KILL, pidApp, NULL, NULL);
 		break;
@@ -1779,7 +1683,6 @@ void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
 	usedtime += (ruse.ru_utime.tv_sec * 1000 + ruse.ru_utime.tv_usec / 1000) * cpu_compensation;
 	usedtime += (ruse.ru_stime.tv_sec * 1000 + ruse.ru_stime.tv_usec / 1000) * cpu_compensation;
 
-	//clean_session(pidApp);
 }
 void clean_workdir(char *work_dir){
 	umount(work_dir);
@@ -1793,32 +1696,28 @@ void clean_workdir(char *work_dir){
 		execute_cmd("/bin/rm -rf %s/log/* 2>/dev/null", work_dir);
 	}
 }
-void init_parameters(int argc, char ** argv, int & solution_id,
-	int & runner_id) {
-	if (argc < 3) {
-		fprintf(stderr, "Usage:%s solution_id runner_id.\n", argv[0]);
-		fprintf(stderr, "Multi:%s solution_id runner_id judge_base_path.\n",
-			argv[0]);
-		fprintf(stderr,
-			"Debug:%s solution_id runner_id judge_base_path debug.\n",
-			argv[0]);
-		exit(1);
-	}
-	DEBUG = (argc > 4);
-	record_call = (argc > 5);
-	if (argc > 5) {
-		strcpy(LANG_NAME, argv[5]);
-	}
-	if (argc > 3)
-		strcpy(oj_home, argv[3]);
-	else
-		strcpy(oj_home, JUDGEHOME);
 
-	chdir(oj_home); // change the dir// init our work
+void init_parameters(int argc, char ** argv, int & solution_id, int & runner_id) {
+    if(argc < 3) {
+        fprintf(stderr, "Usage:%s solution_id runner_id.\n", argv[0]);
+        fprintf(stderr, "Multi:%s solution_id runner_id judge_base_path.\n", argv[0]);
+        fprintf(stderr, "Debug:%s solution_id runner_id judge_base_path debug.\n", argv[0]);
+        exit(1);
+    }
+    DEBUG =(argc > 4);
+    record_call =(argc > 5);
+    if(argc > 5) {
+        strcpy(LANG_NAME, argv[5]);
+    }
+    if (argc > 3) strcpy(oj_home, argv[3]);
+    else strcpy(oj_home, JUDGEHOME);
 
-	solution_id = atoi(argv[1]);
-	runner_id = atoi(argv[2]);
+    chdir(oj_home); // change the dir// init our work
+
+    solution_id = atoi(argv[1]);
+    runner_id = atoi(argv[2]);
 }
+
 
 int get_sim(int solution_id, int lang, int pid, int &sim_s_id) {
 
@@ -1880,26 +1779,26 @@ int count_in_files(char * dirpath) {
 	return ret;
 }
 
-
 void print_call_array() {
-	printf("int LANG_%sV[256]={", LANG_NAME);
-	int i = 0;
-	for (i = 0; i < call_array_size; i++) {
-		if (call_counter[i]) {
-			printf("%d,", i);
-		}
-	}
-	printf("0};\n");
+    printf("int LANG_%sV[256]={", LANG_NAME);
+    int i = 0;
+    for(i = 0; i < call_array_size; i++) {
+        if (call_counter[i]) {
+            printf("%d, ", i);
+        }
+    }
+    printf("0};\n");
 
-	printf("int LANG_%sC[256]={", LANG_NAME);
-	for (i = 0; i < call_array_size; i++) {
-		if (call_counter[i]) {
-			printf("HOJ_MAX_LIMIT,");
-		}
-	}
-	printf("0};\n");
+    printf("int LANG_%sC[256]={", LANG_NAME);
+    for(i = 0; i < call_array_size; i++) {
+        if (call_counter[i]) {
+            printf("HOJ_MAX_LIMIT, ");
+        }
+    }
+    printf("0};\n");
 
 }
+
 
 
 int main(int argc, char** argv) {
@@ -1980,8 +1879,7 @@ int main(int argc, char** argv) {
         else
             write_log("compile error");
         exit(0);
-    }
-    else {
+    } else {
         update_solution(solution_id, OJ_RI, 0, 0, 0, 0, 0.0);
         umount(work_dir);
     }
@@ -2028,10 +1926,7 @@ int main(int argc, char** argv) {
         copy_freebasic_runtime(work_dir);
     if (lang == 12)
         copy_guile_runtime(work_dir);
-//    if (lang == 15 || lang == 17)
-//        copy_python3_runtime(work_dir);
-    // read files and run
-    // read files and run
+
     // read files and run
     double pass_rate = 0.0;
     int num_of_test = 0;
@@ -2044,8 +1939,7 @@ int main(int argc, char** argv) {
 
         if (pidApp == 0) {
             run_solution(lang, work_dir, time_lmt, usedtime, mem_lmt);
-        }
-        else {
+        } else {
             watch_solution(pidApp, infile, ACflg, isspj, userfile, outfile,
                 solution_id, lang, topmemory, mem_lmt, usedtime, time_lmt,
                 p_id, PEflg, work_dir);
@@ -2075,17 +1969,14 @@ int main(int argc, char** argv) {
         if (http_judge && (!data_list_has(dirp->d_name)))
             continue;
 
-        prepare_files(dirp->d_name, namelen, infile, p_id, work_dir, outfile,
-            userfile, runner_id);
+        prepare_files(dirp->d_name, namelen, infile, p_id, work_dir, outfile, userfile, runner_id);
         init_syscalls_limits(lang);
 
         pid_t pidApp = fork();
 
         if (pidApp == 0) {
-
             run_solution(lang, work_dir, time_lmt, usedtime, mem_lmt);
-        }
-        else {
+        } else {
 
             num_of_test++;
 
@@ -2100,7 +1991,6 @@ int main(int argc, char** argv) {
                 max_case_time = usedtime > max_case_time ? usedtime : max_case_time;
                 usedtime = 0;
             }
-            //clean_session(pidApp);
         }
         if (oi_mode) {
             if (ACflg == OJ_AC) {
@@ -2117,15 +2007,14 @@ int main(int argc, char** argv) {
         ACflg = OJ_PE;
     if (sim_enable && ACflg == OJ_AC && (!oi_mode || finalACflg == OJ_AC) && (lang < 5) ) { //bash don't supported
         sim = get_sim(solution_id, lang, p_id, sim_s_id);
-    }
-    else {
+    }else {
         sim = 0;
     }
     //if(ACflg == OJ_RE)addreinfo(solution_id);
 
     if ((oi_mode && finalACflg == OJ_RE) || ACflg == OJ_RE) {
         if (DEBUG)
-            printf("add RE info of %d..... \n", solution_id);
+            printf("add RE Line 2130 info of %d..... \n", solution_id);
         addreinfo(solution_id);
     }
     if (use_max_time) {
@@ -2164,4 +2053,3 @@ int main(int argc, char** argv) {
     closedir(dp);
     return 0;
 }
-

@@ -1,4 +1,5 @@
 #!/bin/bash
+service judged stop
 cd $PWD/judge
 make
 chmod +x judged
@@ -32,3 +33,5 @@ cp judged /etc/init.d/judged
 chmod +x  /etc/init.d/judged
 ln -sf /etc/init.d/judged /etc/rc3.d/S93judged
 ln -sf /etc/init.d/judged /etc/rc2.d/S93judged
+systemctl daemon-reload
+service judged start
